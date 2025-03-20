@@ -3,28 +3,29 @@ FROM node:18-alpine as build
 
 WORKDIR /app
 
-# Bağımlılıkları kopyala ve yükle
+# Bağımlılıkları yükle
 COPY package*.json ./
 RUN npm install
 
-# Kaynak kodunu kopyala
+# Diğer dosyaları kopyala
 COPY . .
 
-# Uygulamayı derle
+# Ortam değişkenlerini ayarla
+ARG REACT_APP_API_URL
+ENV REACT_APP_API_URL=${REACT_APP_API_URL}
+
+# Build
 RUN npm run build
 
-# Çalıştırma aşaması
+# Production aşaması
 FROM nginx:alpine
 
-# Build aşamasından derlenmiş dosyaları kopyala
-COPY --from=build /app/dist /usr/share/nginx/html
-
-# Nginx varsayılan konfigürasyonu
-RUN rm /etc/nginx/conf.d/default.conf
+# Nginx yapılandırmasını kopyala
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Portu dışarı aç
-EXPOSE 80
+# Build dosyalarını Nginx'e kopyala
+COPY --from=build /app/dist /usr/share/nginx/html
 
-# Nginx'i başlat
+EXPOSE 3000
+
 CMD ["nginx", "-g", "daemon off;"]

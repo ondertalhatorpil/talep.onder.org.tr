@@ -2,21 +2,15 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Bağımlılıkları kopyala ve yükle
+# Önce package.json ve package-lock.json dosyalarını kopyala
 COPY package*.json ./
-RUN npm install --production
+RUN npm install
 
-# Kaynak kodunu kopyala
+# Sonra diğer tüm dosyaları kopyala
 COPY . .
 
-# Health check için curl ekle
-RUN apk add --no-cache curl
-
-# Portu dışarı aç
-EXPOSE 8460
-
-# Sağlık kontrolü endpoint'i için server.js'e ekleme yapın (gerekiyorsa):
-# app.get('/health', (req, res) => res.status(200).send('OK'));
+# Uygulamanın çalışacağı portu belirle
+EXPOSE 8060
 
 # Uygulamayı başlat
-CMD ["node", "src/server.js"]
+CMD ["npm", "start"]
