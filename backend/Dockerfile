@@ -1,13 +1,6 @@
-FROM node:18
+FROM node:18-alpine
 
 WORKDIR /app
-
-# Build araçlarını ve Python'u kur
-RUN apt-get update && apt-get install -y \
-    python3 \
-    make \
-    g++ \
-    && ln -s /usr/bin/python3 /usr/bin/python
 
 # Önce package.json ve package-lock.json dosyalarını kopyala
 COPY package*.json ./
