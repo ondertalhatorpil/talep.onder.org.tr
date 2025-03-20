@@ -2,17 +2,19 @@ version: '3.8'
 
 services:
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: talep-frontend
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    environment:
-      - REACT_APP_API_URL=https://talep.onder.org.tr/api
-    networks:
-      - talep-network
+  build:
+    context: ./frontend
+    dockerfile: Dockerfile
+    args:
+      - VITE_API_URL=https://talep.onder.org.tr/api
+  container_name: talep-frontend
+  restart: unless-stopped
+  ports:
+    - "3000:3000"
+  environment:
+    - VITE_API_URL=https://talep.onder.org.tr/api
+  networks:
+    - talep-network
 
   backend:
     build:

@@ -11,8 +11,8 @@ RUN npm install
 COPY . .
 
 # Ortam değişkenlerini ayarla
-ARG REACT_APP_API_URL
-ENV REACT_APP_API_URL=${REACT_APP_API_URL}
+ARG VITE_API_URL
+ENV VITE_API_URL=${VITE_API_URL}
 
 # Build
 RUN npm run build
