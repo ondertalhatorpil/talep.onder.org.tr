@@ -1,13 +1,19 @@
-FROM node:18-alpine
+FROM node:18
 
 WORKDIR /app
+
+# Build araçlarını ve Python'u kur
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && ln -s /usr/bin/python3 /usr/bin/python
 
 # Önce package.json ve package-lock.json dosyalarını kopyala
 COPY package*.json ./
 
-# Modülleri yükle ve bcrypt'i yeniden derle
+# Modülleri yükle
 RUN npm install
-RUN npm rebuild bcrypt --build-from-source
 
 # Sonra diğer tüm dosyaları kopyala
 COPY . .
