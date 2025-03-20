@@ -220,10 +220,10 @@ const ReservationForm = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-black">
-                {isEditing ? 'Rezervasyon Düzenle' : 'Yeni Rezervasyon'}
+                {isEditing ? 'Talebi Düzenle' : 'Yeni Talep Oluştur'}
               </h1>
               <p className="text-red-300 mt-1">
-                {isEditing ? 'Mevcut rezervasyonu güncelleyin' : 'Yeni araç rezervasyonu oluşturun'}
+                {isEditing ? 'Mevcut talebi güncelleyin' : 'Yeni araç talebi oluşturun'}
               </p>
             </div>
           </div>
@@ -236,7 +236,7 @@ const ReservationForm = () => {
               <svg className="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              Rezervasyonlara Dön
+              Taleplere Dön
             </button>
           </div>
         </div>
@@ -265,7 +265,7 @@ const ReservationForm = () => {
       <svg className="h-6 w-6 mr-2 text-primary-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
       </svg>
-      Rezervasyon Bilgileri
+      taLEP Bilgileri
     </h2>
   </div>
   
@@ -433,7 +433,7 @@ const ReservationForm = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </div>
-            <span>Rezervasyon Amacı</span>
+            <span>Talebin Amacı</span>
             <span className="ml-2 text-red-600 text-lg">*</span>
           </div>
         </label>
@@ -484,7 +484,7 @@ const ReservationForm = () => {
         <div className="ml-4">
           <h4 className="text-sm font-bold text-blue-800">Bilgilendirme</h4>
           <p className="mt-1 text-sm text-blue-700">
-            Rezervasyon oluşturulduktan sonra yönetici onayı gerekecektir. Onaylanmadan önce rezervasyonunuzu iptal edebilir veya düzenleyebilirsiniz.
+            Talep oluşturulduktan sonra yönetici onayı gerekecektir. Onaylanmadan önce talebinizi iptal edebilir veya düzenleyebilirsiniz.
           </p>
         </div>
       </div>
