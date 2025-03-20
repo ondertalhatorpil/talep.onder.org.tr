@@ -19,7 +19,7 @@ const TipsAndShortcuts = ({ animate }) => {
             Takvim Görünümü
           </h3>
           <p className="text-sm text-blue-700">
-            Rezervasyonları takvim görünümünde görmek için 
+            Talepleri takvim görünümünde görmek için 
             <Link to="/calendar" className="underline font-medium"> takvim sayfasını</Link> ziyaret edin.
           </p>
         </div>
@@ -32,7 +32,7 @@ const TipsAndShortcuts = ({ animate }) => {
             Araç Durumu
           </h3>
           <p className="text-sm text-green-700">
-            Bakımda olan araçlar otomatik olarak rezervasyon listesinde görünmez.
+            Bakımda olan araçlar otomatik olarak talep listesinde görünmez.
           </p>
         </div>
         <div className="bg-purple-50 p-4 rounded-xl border border-purple-100">
@@ -40,10 +40,10 @@ const TipsAndShortcuts = ({ animate }) => {
             <svg className="h-5 w-5 mr-1 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
             </svg>
-            Hızlı Rezervasyon
+            Hızlı Talep
           </h3>
           <p className="text-sm text-purple-700">
-            Takvimde bir zaman aralığına tıklayarak hızlıca rezervasyon oluşturabilirsiniz.
+            Takvimde bir zaman aralığına tıklayarak hızlıca talep oluşturabilirsiniz.
           </p>
         </div>
       </div>

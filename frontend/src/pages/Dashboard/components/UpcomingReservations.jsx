@@ -12,7 +12,7 @@ const UpcomingReservations = ({ reservations, animate, isToday }) => {
           <svg className="h-5 w-5 mr-2 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          Yaklaşan Rezervasyonlar
+          Yaklaşan Talepler
         </h2>
         <Link to="/reservations" className="text-primary-600 hover:text-primary-800 text-sm font-medium flex items-center">
           Tümünü Gör
@@ -82,9 +82,9 @@ const UpcomingReservations = ({ reservations, animate, isToday }) => {
           <svg className="h-12 w-12 text-gray-300 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          <p className="text-gray-500 text-base">Yaklaşan rezervasyon bulunmamaktadır.</p>
+          <p className="text-gray-500 text-base">Yaklaşan talep bulunmamaktadır.</p>
           <Link to="/reservations/new" className="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-blue-500 bg-primary-600 hover:bg-primary-700">
-            Rezervasyon Oluştur
+            Talep Oluştur
           </Link>
         </div>
       )}

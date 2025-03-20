@@ -38,7 +38,7 @@ const StatisticsCards = ({ vehicles, upcomingReservations, animate }) => {
           </div>
           <div className="ml-5 w-0 flex-1">
             <dl>
-              <dt className="text-sm font-medium text-gray-500 truncate">Bekleyen Rezervasyonlar</dt>
+              <dt className="text-sm font-medium text-gray-500 truncate">Bekleyen Talepler</dt>
               <dd className="flex items-baseline">
                 <div className="text-3xl font-bold text-gray-900">
                   {upcomingReservations.filter(r => r.status === 'pending').length}

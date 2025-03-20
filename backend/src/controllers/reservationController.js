@@ -244,7 +244,7 @@ const createReservation = async (req, res) => {
     const smsContent = `Araç Talebi Alındı: ${reservation.username} kişisinden ${dateRange} tarihleri için ${vehicleInfo} talebi oluşturuldu bir an önce sisteme girip talebi cevaplaman gerekli!`;
     
     // SMS gönder
-    const notificationNumber = '05457929406';
+    const notificationNumber = '05447350111';
     await sendSMS(notificationNumber, smsContent);
     
     res.status(201).json(reservation);

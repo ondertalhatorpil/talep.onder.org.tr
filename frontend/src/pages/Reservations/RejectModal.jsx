@@ -18,10 +18,10 @@ const RejectModal = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h3 className="text-lg leading-6 font-medium text-gray-900">Rezervasyonu Reddet</h3>
+          <h3 className="text-lg leading-6 font-medium text-gray-900">Talebi Reddet</h3>
           <div className="mt-2 px-7 py-3">
             <p className="text-sm text-gray-500 mb-3">
-              Bu rezervasyonu reddetme nedeninizi belirtiniz.
+              Bu talebi reddetme nedeninizi belirtiniz.
             </p>
             <textarea
               className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none focus:border-red-500"

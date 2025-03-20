@@ -15,7 +15,7 @@ const QuickActions = ({ animate }) => {
           <svg className="h-8 w-8 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
-          <span className="font-medium">Yeni Rezervasyon</span>
+          <span className="font-medium">Yeni Talep Oluştur</span>
         </Link>
         <Link to="/calendar" className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-4 rounded-xl text-center transition duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg flex flex-col items-center justify-center">
           <svg className="h-8 w-8 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -27,7 +27,7 @@ const QuickActions = ({ animate }) => {
           <svg className="h-8 w-8 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
-          <span className="font-medium">Tüm Rezervasyonlar</span>
+          <span className="font-medium">Tüm Talepler</span>
         </Link>
         <Link to="/vehicles" className="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-4 rounded-xl text-center transition duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg flex flex-col items-center justify-center">
           <svg className="h-8 w-8 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">

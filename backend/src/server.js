@@ -27,7 +27,7 @@ app.use('/api/vehicles', require('./routes/vehicles'));
 app.use('/api/reservations', require('./routes/reservations'));
 
 // Server'ı başlat
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 8060;
 app.listen(PORT, () => {
   console.log(`Server ${PORT} portunda çalışıyor`);
 });

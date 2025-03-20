@@ -23,7 +23,7 @@ const ReservationList = ({
           <svg className="h-5 w-5 mr-2 text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
-          Rezervasyon Listesi
+          Talep Listesi
         </h2>
       </div>
 
@@ -164,7 +164,7 @@ const ReservationList = ({
               <svg className="h-16 w-16 text-gray-300 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              <p className="text-gray-500 text-lg mb-4">Arama kriterlerinize uygun rezervasyon bulunamadı.</p>
+              <p className="text-gray-500 text-lg mb-4">Arama kriterlerinize uygun talep bulunamadı.</p>
               <button
                 className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition duration-300"
                 onClick={() => {
@@ -180,7 +180,7 @@ const ReservationList = ({
               <svg className="h-16 w-16 text-gray-300 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <p className="text-gray-500 text-lg mb-4">Sistemde rezervasyon bulunmamaktadır.</p>
+              <p className="text-gray-500 text-lg mb-4">Sistemde talep bulunmamaktadır.</p>
               <Link
                 to="/reservations/new"
                 className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition duration-300 inline-flex items-center"
@@ -188,7 +188,7 @@ const ReservationList = ({
                 <svg className="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
-                Yeni Rezervasyon Ekle
+                Yeni Talep Oluştur
               </Link>
             </div>
           )}
