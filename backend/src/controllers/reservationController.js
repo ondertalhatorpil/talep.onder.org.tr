@@ -150,7 +150,6 @@ const sendSMS = async (phoneNumber, message) => {
   }
 };
 
-// Rezervasyon kontrolcüsüne SMS gönderim fonksiyonunu ekleyin
 const createReservation = async (req, res) => {
   try {
     const { vehicle_id, start_date_time, end_date_time, purpose, notes } = req.body;
@@ -254,7 +253,8 @@ const createReservation = async (req, res) => {
   }
 };
 
-// Rezervasyon güncelle
+
+
 const updateReservation = async (req, res) => {
   try {
     const { id } = req.params;

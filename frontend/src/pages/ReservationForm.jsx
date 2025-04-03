@@ -309,6 +309,13 @@ const ReservationForm = () => {
       onChange={handleStartHourChange}
     >
       <option value="">Saat Seçin</option>
+      <option value="08">01:00</option>
+      <option value="08">02:00</option>
+      <option value="08">03:00</option>
+      <option value="08">04:00</option>
+      <option value="08">05:00</option>
+      <option value="08">06:00</option>
+      <option value="08">07:00</option>
       <option value="08">08:00</option>
       <option value="09">09:00</option>
       <option value="10">10:00</option>
@@ -320,6 +327,13 @@ const ReservationForm = () => {
       <option value="16">16:00</option>
       <option value="17">17:00</option>
       <option value="18">18:00</option>
+      <option value="18">19:00</option>
+      <option value="18">20:00</option>
+      <option value="18">21:00</option>
+      <option value="18">22:00</option>
+      <option value="18">23:00</option>
+      <option value="18">24:00</option>
+      <option value="18">00:00</option>
     </select>
   </div>
   
@@ -358,6 +372,13 @@ const ReservationForm = () => {
       onChange={handleEndHourChange}
     >
       <option value="">Saat Seçin</option>
+      <option value="08">01:00</option>
+      <option value="08">02:00</option>
+      <option value="08">03:00</option>
+      <option value="08">04:00</option>
+      <option value="08">05:00</option>
+      <option value="08">06:00</option>
+      <option value="08">07:00</option>
       <option value="08">08:00</option>
       <option value="09">09:00</option>
       <option value="10">10:00</option>
@@ -369,6 +390,13 @@ const ReservationForm = () => {
       <option value="16">16:00</option>
       <option value="17">17:00</option>
       <option value="18">18:00</option>
+      <option value="18">19:00</option>
+      <option value="18">20:00</option>
+      <option value="18">21:00</option>
+      <option value="18">22:00</option>
+      <option value="18">23:00</option>
+      <option value="18">24:00</option>
+      <option value="18">00:00</option>
     </select>
   </div>
 </div>
