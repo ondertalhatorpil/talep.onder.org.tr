@@ -95,12 +95,15 @@ const ReservationForm = () => {
     updateDateTime('start', startDate, newHour);
   };
   
-  // Bitiş tarihi değiştiğinde
-  const handleEndDateChange = (e) => {
-    const newDate = e.target.value;
-    setEndDate(newDate);
-    updateDateTime('end', newDate, endHour);
-  };
+// Bitiş tarihi değiştiğinde
+const handleEndDateChange = (e) => {
+  // Doğrudan değeri al, new Date() dönüşümü yapma
+  const newDate = e.target.value;
+  setEndDate(newDate);
+  
+  // Tarihi değiştir
+  updateDateTime('end', newDate, endHour);
+};
   
   // Bitiş saati değiştiğinde
   const handleEndHourChange = (e) => {
