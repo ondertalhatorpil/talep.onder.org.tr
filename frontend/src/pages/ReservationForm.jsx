@@ -67,19 +67,20 @@ const ReservationForm = () => {
   }, [id, isEditing]);
 
 
-  useEffect(() => {
-    if (reservation.start_date_time) {
-      const startDateTime = new Date(reservation.start_date_time);
-      setStartDate(startDateTime.toISOString().split('T')[0]);
-      setStartHour(startDateTime.getHours().toString().padStart(2, '0'));
-    }
-    
-    if (reservation.end_date_time) {
-      const endDateTime = new Date(reservation.end_date_time);
-      setEndDate(endDateTime.toISOString().split('T')[0]);
-      setEndHour(endDateTime.getHours().toString().padStart(2, '0'));
-    }
-  }, [reservation.start_date_time, reservation.end_date_time]);
+useEffect(() => {
+  if (reservation.start_date_time) {
+    // ISO string formatında bölme, T'den sonraki saat kısmını alır
+    const [datePart, timePart] = reservation.start_date_time.split('T');
+    setStartDate(datePart);
+    setStartHour(timePart.substring(0, 2)); // ilk iki karakter (saat)
+  }
+  
+  if (reservation.end_date_time) {
+    const [datePart, timePart] = reservation.end_date_time.split('T');
+    setEndDate(datePart);
+    setEndHour(timePart.substring(0, 2)); // ilk iki karakter (saat)
+  }
+}, [reservation.start_date_time, reservation.end_date_time]);
   
   // Başlangıç tarihi değiştiğinde
   const handleStartDateChange = (e) => {
@@ -112,14 +113,19 @@ const handleEndDateChange = (e) => {
     updateDateTime('end', endDate, newHour);
   };
   
-  // Tarih ve saati birleştirip rezervasyon nesnesini güncelleme
   const updateDateTime = (prefix, date, hour) => {
     if (date && hour) {
+      // Tarih ve saati doğrudan birleştir (T formatında)
       const newDateTime = `${date}T${hour}:00`;
+      
+      // Tarih nesnesi oluşturmak yerine string değeri kullan
       setReservation(prev => ({
         ...prev,
         [`${prefix}_date_time`]: newDateTime
       }));
+      
+      // Konsolda kontrol etmek için
+      console.log(`${prefix} date set to:`, newDateTime);
     }
   };
   
@@ -330,13 +336,12 @@ const handleEndDateChange = (e) => {
       <option value="16">16:00</option>
       <option value="17">17:00</option>
       <option value="18">18:00</option>
-      <option value="18">19:00</option>
-      <option value="18">20:00</option>
-      <option value="18">21:00</option>
-      <option value="18">22:00</option>
-      <option value="18">23:00</option>
-      <option value="18">24:00</option>
-      <option value="18">00:00</option>
+      <option value="19">19:00</option>
+      <option value="20">20:00</option>
+      <option value="21">21:00</option>
+      <option value="22">22:00</option>
+      <option value="23">23:00</option>
+      <option value="00">24:00</option>
     </select>
   </div>
   
@@ -393,13 +398,12 @@ const handleEndDateChange = (e) => {
       <option value="16">16:00</option>
       <option value="17">17:00</option>
       <option value="18">18:00</option>
-      <option value="18">19:00</option>
-      <option value="18">20:00</option>
-      <option value="18">21:00</option>
-      <option value="18">22:00</option>
-      <option value="18">23:00</option>
-      <option value="18">24:00</option>
-      <option value="18">00:00</option>
+      <option value="19">19:00</option>
+      <option value="20">20:00</option>
+      <option value="21">21:00</option>
+      <option value="22">22:00</option>
+      <option value="23">23:00</option>
+      <option value="00">24:00</option>
     </select>
   </div>
 </div>
