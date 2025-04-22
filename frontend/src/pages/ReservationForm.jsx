@@ -341,7 +341,7 @@ const handleEndDateChange = (e) => {
       <option value="21">21:00</option>
       <option value="22">22:00</option>
       <option value="23">23:00</option>
-      <option value="00">24:00</option>
+      <option value="24">24:00</option>
     </select>
   </div>
   
@@ -403,7 +403,7 @@ const handleEndDateChange = (e) => {
       <option value="21">21:00</option>
       <option value="22">22:00</option>
       <option value="23">23:00</option>
-      <option value="00">24:00</option>
+      <option value="24">24:00</option>
     </select>
   </div>
 </div>
