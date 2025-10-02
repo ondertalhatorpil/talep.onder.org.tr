@@ -11,8 +11,8 @@ const {
   getAvailableVehicles,
   PubliCar,
   PublicCalendar
-} = require('../controllers/reservationController');
-const { authenticate, isAdmin } = require('../middleware/auth');
+} = require('../../controllers/carControllers/reservationController');
+const { authenticate, isAdmin } = require('../../middleware/auth');
 
 // Public routes (no authentication required)
 router.get('/public/vehicles', PubliCar);

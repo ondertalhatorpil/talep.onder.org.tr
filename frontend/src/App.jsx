@@ -18,6 +18,9 @@ import NotFound from './pages/NotFound';
 import PublicCalendar from './pages/PublicCalendar';
 import ReservationSuccess from './pages/ReservationSuccess';
 
+// Beşirağa Pages
+import BesiragaCalendar from './pages/besiraga/BesiragaCalendar';
+import BesiragaPanel from './pages/besiraga/BesiragaPanel';
 
 // Protected Route bileşeni
 const ProtectedRoute = ({ children }) => {
@@ -65,6 +68,10 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/public-calendar" element={<PublicCalendar />} />
+
+        {/* Beşirağa Routes - Public (Şifresiz) */}
+        <Route path="/besiraga" element={<BesiragaCalendar />} />
+        <Route path="/besiraga/panel" element={<BesiragaPanel />} />
 
         {/* Auth Routes */}
         <Route path="/" element={<AuthLayout />}>

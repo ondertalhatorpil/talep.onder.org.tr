@@ -7,8 +7,8 @@ const {
   createVehicle, 
   updateVehicle, 
   deleteVehicle 
-} = require('../controllers/vehicleController');
-const { authenticate, isAdmin } = require('../middleware/auth');
+} = require('../../controllers/carControllers/vehicleController');
+const { authenticate, isAdmin } = require('../../middleware/auth');
 
 // Tüm araçları getir
 router.get('/', authenticate, getAllVehicles);

@@ -1,5 +1,5 @@
 // backend/controllers/reservationController.js
-const db = require('../config/db');
+const db = require('../../config/db');
 
 // Tüm rezervasyonları getir (admin tümünü, kullanıcı kendi departmanınınkileri)
 const getAllReservations = async (req, res) => {

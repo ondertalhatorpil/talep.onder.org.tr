@@ -1,7 +1,7 @@
 // backend/controllers/authController.js
 const bcrypt = require('bcryptjs');
-const db = require('../config/db');
-const { generateToken } = require('../utils/jwtUtils');
+const db = require('../../config/db');
+const { generateToken } = require('../../utils/jwtUtils');
 
 // Kullanıcı girişi
 const login = async (req, res) => {

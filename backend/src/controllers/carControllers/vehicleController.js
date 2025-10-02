@@ -1,5 +1,5 @@
 // backend/controllers/vehicleController.js
-const db = require('../config/db');
+const db = require('../../config/db');
 
 // Tüm araçları getir
 const getAllVehicles = async (req, res) => {
