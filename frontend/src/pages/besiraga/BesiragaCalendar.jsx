@@ -58,7 +58,7 @@ const BesiragaCalendar = () => {
       {/* Header */}
       <header className="sticky top-0 bg-[#f8f6f6] z-10">
         <div className="flex items-center p-4 justify-between border-b border-[#ec1313]/20">
-          <h1 className="text-xl font-bold text-gray-900 flex-1 text-center">Beşirağa Müsayit mi?</h1>
+          <h1 className="text-xl font-bold text-gray-900 flex-1 text-center">Beşirağa Müsait mi?</h1>
         </div>
       </header>
 
@@ -222,7 +222,7 @@ const BesiragaCalendar = () => {
                       className="bg-white rounded-2xl overflow-hidden border-2 border-[#ec1313]/20 shadow-sm"
                     >
                       {/* Mekan Görseli */}
-                      <div className="h-36 relative overflow-hidden">
+                      <div className="h-60 relative overflow-hidden">
                         {info.image ? (
                           <img 
                             src={info.image} 
@@ -260,11 +260,11 @@ const BesiragaCalendar = () => {
                         </div>
 
                         <p className="text-sm text-gray-600 leading-relaxed">
-                          {key === 'Yemekhane' && 'Geniş ve ferah yemekhane alanımız. Düğün, nişan ve özel organizasyonlar için idealdir.'}
-                          {key === 'Atolye' && 'Atölye çalışmaları, seminer ve eğitimler için özel olarak tasarlanmış mekanımız.'}
-                          {key === 'Cardaklar' && 'Açık havada, doğayla iç içe çardak alanlarımız. Yazlık etkinlikler için mükemmel.'}
-                          {key === 'Medrese_Sedir' && 'Medrese içerisindeki geleneksel sedirli odamız. Samimi toplantılar için uygundur.'}
-                          {key === 'Cami_Sedir' && 'Cami yanındaki geniş sedirli odamız. Toplu sohbet ve etkinlikler için idealdir.'}
+                          {key === 'Yemekhane' }
+                          {key === 'Atolye' }
+                          {key === 'Cardaklar'}
+                          {key === 'Medrese_Sedir'}
+                          {key === 'Cami_Sedir'}
                         </p>
                       </div>
                     </div>
