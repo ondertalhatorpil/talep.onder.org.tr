@@ -47,7 +47,7 @@ const Login = () => {
     setBesiragaError('');
   };
 
-  // Beşirağa Şifre Kontrolü
+  // Beşirağa Şifre Kontrolü (DÜZELTİLMİŞ MANTIK)
   const handleBesiragaSubmit = async (e) => {
     e.preventDefault();
     setBesiragaError('');
@@ -60,20 +60,23 @@ const Login = () => {
     setBesiragaLoading(true);
 
     try {
-      const response = await besiragaService.checkAdminPassword(besiragaPassword);
+      // YENİ MANTIK: Şifreyi doğrulamak için doğrudan talepleri çekmeyi dene.
+      // Eğer şifre doğruysa, middleware izin verecek ve veri gelecek.
+      // Eğer şifre yanlışsa, middleware 401 hatası döndürecek ve catch bloğu çalışacak.
+      await besiragaService.getAllRequests(besiragaPassword, 'pending');
       
-      if (response.success) {
-        sessionStorage.setItem('besiraga_password', besiragaPassword);
-        navigate('/besiraga/panel');
-      }
+      // Eğer yukarıdaki satır hata vermeden çalıştıysa, şifre doğrudur.
+      sessionStorage.setItem('besiraga_password', besiragaPassword);
+      navigate('/besiraga/panel');
+
     } catch (error) {
+      // Backend'den gelen "Yetkisiz" hatası buraya düşecek.
       setBesiragaError(error.response?.data?.message || 'Hatalı şifre');
     } finally {
       setBesiragaLoading(false);
     }
   };
   
- // Ana Giriş Sayfası (view === 'login')
   return (
     <>
       <div className="flex flex-col min-h-screen justify-center items-center p-4 sm:p-6 bg-gray-50">
@@ -93,7 +96,6 @@ const Login = () => {
                 <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg mb-4">
                   <div className="flex">
                     <div className="flex-shrink-0">
-                      {/* Alert Icon */}
                       <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                       </svg>
@@ -110,7 +112,6 @@ const Login = () => {
                 <div className="relative">
                   <label className="sr-only" htmlFor="username">Kullanıcı Adı</label>
                   <div className="relative">
-                    {/* User Icon */}
                     <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
@@ -131,7 +132,6 @@ const Login = () => {
                 <div className="relative">
                   <label className="sr-only" htmlFor="password">Şifre</label>
                   <div className="relative">
-                    {/* Lock Icon */}
                     <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
@@ -157,7 +157,6 @@ const Login = () => {
                   className="w-full h-14 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-lg transition-colors duration-300 focus:outline-none focus:ring-4 focus:ring-red-600/50 flex items-center justify-center shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
-                    // Loading Spinner
                     <svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -172,7 +171,6 @@ const Login = () => {
           
           {/* Beşirağa Müsait mi Buton Alanı */}
           <div className="w-full max-w-sm text-center pt-4">
-            {/* Calendar Icon */}
             <svg className="inline-block text-red-600 w-8 h-8 sm:w-10 sm:h-10 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
@@ -188,31 +186,24 @@ const Login = () => {
         </main>
       </div>
 
-      {/* Beşirağa Modal (Mobile-First Uyarlanmış) */}
+      {/* Beşirağa Modal */}
       {showBesiragaModal && (
         <div 
           className="fixed inset-0 bg-gray-900/70 flex items-center justify-center p-2 z-50 transition-opacity duration-300"
           onClick={handleCloseBesiragaModal}
         >
-          {/* Modal İçeriği */}
           <div 
             className="w-full max-w-md  p-3 sm:p-8 transition-all duration-300 transform scale-100"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* <h3 className="text-xl font-bold text-gray-900 mb-6 text-center">Yönetici Paneli Şifresi</h3> */}
-            
             <form onSubmit={handleBesiragaSubmit}>
-              {/* Hata Mesajı */}
               {besiragaError && (
                 <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg mb-4">
                   <p className="text-sm font-medium text-red-700">{besiragaError}</p>
                 </div>
               )}
-
-              {/* Şifre Girişi ve OK Butonu */}
               <div className="relative">
                 <div className="relative">
-                  {/* Lock Icon */}
                   <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
@@ -233,13 +224,11 @@ const Login = () => {
                     className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors flex items-center justify-center disabled:opacity-50 shadow-md focus:outline-none focus:ring-2 focus:ring-red-500"
                   >
                     {besiragaLoading ? (
-                      // Loading Spinner
                       <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
                     ) : (
-                      // Check Mark Icon
                       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
@@ -248,14 +237,6 @@ const Login = () => {
                 </div>
               </div>
             </form>
-            
-            {/* <button
-                onClick={handleCloseBesiragaModal}
-                type="button"
-                className="mt-4 w-full text-sm text-gray-500 hover:text-gray-700 transition"
-            >
-                Kapat
-            </button> */}
           </div>
         </div>
       )}
