@@ -1,8 +1,17 @@
-// src/pages/Vehicles.jsx
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { vehicleService } from '../services/api';
 import useAuthStore from '../store/authStore';
+import { 
+  Plus, 
+  Search, 
+  Filter, 
+  Car, 
+  Settings, 
+  Trash2, 
+  CalendarPlus,
+  Info
+} from 'lucide-react';
 
 const Vehicles = () => {
   const { user } = useAuthStore();
@@ -24,38 +33,30 @@ const Vehicles = () => {
       } catch (err) {
         setError('Araçlar yüklenirken bir hata oluştu');
         setLoading(false);
-        console.error(err);
       }
     };
-    
     fetchVehicles();
   }, []);
   
-  // Araç durumuna göre renk sınıfı
-  const getStatusClass = (status) => {
+  const getStatusStyles = (status) => {
     switch (status) {
       case 'active':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-50 text-green-600 border-green-100';
       case 'inactive':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-50 text-red-600 border-red-100';
       case 'maintenance':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-amber-50 text-amber-600 border-amber-100';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-50 text-gray-600 border-gray-100';
     }
   };
   
-  // Araç durumunun Türkçe karşılığı
   const getStatusText = (status) => {
     switch (status) {
-      case 'active':
-        return 'Aktif';
-      case 'inactive':
-        return 'Pasif';
-      case 'maintenance':
-        return 'Bakımda';
-      default:
-        return status;
+      case 'active': return 'Aktif';
+      case 'inactive': return 'Pasif';
+      case 'maintenance': return 'Bakımda';
+      default: return status;
     }
   };
   
@@ -63,220 +64,170 @@ const Vehicles = () => {
     const matchesSearch = 
       vehicle.license_plate.toLowerCase().includes(searchTerm.toLowerCase()) ||
       vehicle.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (vehicle.description && vehicle.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+      vehicle.model.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || vehicle.status === statusFilter;
-    
     return matchesSearch && matchesStatus;
   });
   
-  // Araç silme fonksiyonu
   const handleDeleteVehicle = async (id) => {
     if (!isAdmin) return;
-    
     if (window.confirm('Bu aracı silmek istediğinizden emin misiniz?')) {
       try {
         await vehicleService.deleteVehicle(id);
-        setVehicles(vehicles.filter(vehicle => vehicle.id !== id));
+        setVehicles(vehicles.filter(v => v.id !== id));
       } catch (err) {
         setError('Araç silinirken bir hata oluştu');
-        console.error(err);
       }
     }
   };
   
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+      <div className="flex flex-col justify-center items-center h-96 space-y-4">
+        <div className="w-12 h-12 border-4 border-red-100 border-t-red-600 rounded-full animate-spin"></div>
+        <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Filo Yükleniyor</p>
       </div>
     );
   }
   
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-10 animate-fadeIn">
+      {/* Üst Başlık ve Ekleme Butonu */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Araçlar</h1>
-          <p className="mt-2 text-gray-600">
-            Sistemdeki tüm araçları görüntüle ve yönet
-          </p>
+          <h2 className="text-sm font-bold text-gray-400 uppercase tracking-[0.25em] flex items-center mb-2">
+            <span className="w-8 h-[1px] bg-red-600 mr-3"></span>
+            Envanter Yönetimi
+          </h2>
+          <h1 className="text-4xl font-black text-gray-900 tracking-tight">Araç <span className="text-red-600">Filosu</span></h1>
         </div>
+        
         {isAdmin && (
-          <div className="mt-4 sm:mt-0">
-            <Link
-              to="/vehicles/new"
-              className="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all"
-            >
-              <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-              </svg>
-              Yeni Araç Ekle
-            </Link>
-          </div>
+          <Link
+            to="/vehicles/new"
+            className="bg-red-600 text-white px-8 py-4 rounded-[1.5rem] font-bold text-sm hover:bg-red-700 transition-all shadow-xl shadow-red-100 flex items-center justify-center group"
+          >
+            <Plus size={20} className="mr-2 group-hover:rotate-90 transition-transform duration-300" />
+            Yeni Araç Ekle
+          </Link>
         )}
       </div>
-      
+
       {error && (
-        <div className="flex items-center p-4 mb-6 text-red-800 rounded-lg bg-red-50 border-l-4 border-red-500" role="alert">
-          <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-          </svg>
-          <span>{error}</span>
+        <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-xs font-bold border border-red-100 flex items-center">
+          <Info size={18} className="mr-2" />
+          {error}
         </div>
       )}
       
-      {/* Filtreler */}
-      <div className="mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              id="search"
-              placeholder="Plaka veya model ara..."
-              className="pl-10 w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          
-          <div>
-            <select
-              id="status"
-              className="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="all">Tüm Durumlar</option>
-              <option value="active">Aktif</option>
-              <option value="inactive">Pasif</option>
-              <option value="maintenance">Bakımda</option>
-            </select>
-          </div>
+      {/* Filtreleme ve Arama Çubuğu */}
+      <div className="bg-white p-3 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col lg:flex-row gap-3">
+        <div className="relative flex-1 group">
+          <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-red-500 transition-colors" size={20} />
+          <input
+            type="text"
+            placeholder="Plaka veya model ile hızlı ara..."
+            className="w-full pl-14 pr-6 py-4 bg-gray-50 border-none rounded-[2rem] focus:ring-2 focus:ring-red-500/10 transition-all text-sm font-semibold text-gray-700 placeholder:text-gray-400"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        
+        <div className="relative min-w-[200px] group">
+          <Filter className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-red-500 transition-colors" size={18} />
+          <select
+            className="w-full pl-12 pr-6 py-4 bg-gray-50 border-none rounded-[2rem] focus:ring-2 focus:ring-red-500/10 transition-all text-sm font-bold text-gray-600 appearance-none cursor-pointer"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="all">Tüm Durumlar</option>
+            <option value="active">Aktif Araçlar</option>
+            <option value="inactive">Pasif Araçlar</option>
+            <option value="maintenance">Bakımdakiler</option>
+          </select>
         </div>
       </div>
       
-      {/* Araç listesi */}
-      <div className="bg-white shadow-md rounded-xl overflow-hidden border border-gray-100">
-        {filteredVehicles.length > 0 ? (
-          <ul className="divide-y divide-gray-100">
-            {filteredVehicles.map((vehicle) => (
-              <li key={vehicle.id} className="hover:bg-gray-50 transition-colors">
-                <div className="px-6 py-5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0 bg-blue-100 p-2 rounded-lg">
-                        <svg className="h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m-8 6H4m0 0l4 4m-4-4l4-4" />
-                        </svg>
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900">
-                          {vehicle.brand} {vehicle.model}
-                        </h3>
-                        <p className="text-sm text-gray-600 font-medium">
-                          {vehicle.license_plate}
-                        </p>
-                      </div>
-                    </div>
-                    <div>
-                      <span className={`px-3 py-1 inline-flex text-xs font-medium rounded-full ${getStatusClass(vehicle.status)}`}>
-                        {getStatusText(vehicle.status)}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4 flex items-center justify-between">
-                    <p className="text-sm text-gray-500 line-clamp-1">
-                      {vehicle.description || 'Açıklama yok'}
-                    </p>
-                    
-                    <div className="flex space-x-2">
-                      {isAdmin ? (
-                        <>
-                          <Link
-                            to={`/vehicles/${vehicle.id}`}
-                            className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors"
-                          >
-                            <svg className="mr-1.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                            </svg>
-                            Düzenle
-                          </Link>
-                          <button
-                            onClick={() => handleDeleteVehicle(vehicle.id)}
-                            className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors"
-                          >
-                            <svg className="mr-1.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                            </svg>
-                            Sil
-                          </button>
-                        </>
-                      ) : (
-                        <Link
-                          to={`/reservations/new?vehicle=${vehicle.id}`}
-                          className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-green-600 bg-green-50 rounded-md hover:bg-green-100 transition-colors"
-                        >
-                          <svg className="mr-1.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                          </svg>
-                          Rezervasyon Yap
-                        </Link>
-                      )}
-                    </div>
-                  </div>
+      {/* Araç Kartları (Grid Yapısı) */}
+      {filteredVehicles.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {filteredVehicles.map((vehicle) => (
+            <div key={vehicle.id} className="group bg-white rounded-[2.5rem] border border-gray-100 p-8 transition-all duration-300 hover:shadow-2xl hover:shadow-gray-200/40 relative overflow-hidden">
+              
+              <div className="flex justify-between items-start mb-6">
+                <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:bg-red-50 group-hover:text-red-600 transition-colors">
+                  <Car size={30} strokeWidth={1.5} />
                 </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="px-6 py-10 text-center">
-            <svg className="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            
-            {searchTerm || statusFilter !== 'all' ? (
-              <div className="mt-4">
-                <p className="text-gray-600">Arama kriterlerinize uygun araç bulunamadı.</p>
-                <button
-                  className="mt-3 inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors"
-                  onClick={() => {
-                    setSearchTerm('');
-                    setStatusFilter('all');
-                  }}
-                >
-                  <svg className="mr-1.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                  Filtreleri Temizle
-                </button>
+                <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm ${getStatusStyles(vehicle.status)}`}>
+                  {getStatusText(vehicle.status)}
+                </span>
               </div>
-            ) : (
-              <div className="mt-4">
-                <p className="text-gray-600">Sistemde araç bulunmamaktadır.</p>
-                {isAdmin && (
-                  <Link 
-                    to="/vehicles/new" 
-                    className="mt-3 inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+
+              <div className="space-y-1">
+                <h3 className="text-2xl font-black text-gray-900 tracking-tight">
+                  {vehicle.brand} <span className="text-gray-400 font-bold">{vehicle.model}</span>
+                </h3>
+                <p className="text-sm font-black text-red-600/80 uppercase tracking-widest leading-none">
+                  {vehicle.license_plate}
+                </p>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-gray-50">
+                <p className="text-sm text-gray-500 line-clamp-2 min-h-[40px] leading-relaxed italic">
+                  {vehicle.description || 'Bu araç için herhangi bir ek açıklama belirtilmemiş.'}
+                </p>
+              </div>
+
+              <div className="mt-8 flex items-center justify-between gap-3">
+                {isAdmin ? (
+                  <>
+                    <Link
+                      to={`/vehicles/${vehicle.id}`}
+                      className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-900 text-white rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-black transition-all"
+                    >
+                      <Settings size={14} /> Düzenle
+                    </Link>
+                    <button
+                      onClick={() => handleDeleteVehicle(vehicle.id)}
+                      className="p-3 bg-gray-50 text-gray-400 rounded-2xl hover:bg-red-50 hover:text-red-600 transition-all"
+                      title="Aracı Sil"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    to={`/reservations/new?vehicle=${vehicle.id}`}
+                    className="w-full flex items-center justify-center gap-2 py-4 bg-red-600 text-white rounded-2xl text-xs font-black uppercase tracking-[0.2em] hover:bg-red-700 transition-all shadow-lg shadow-red-100"
                   >
-                    <svg className="mr-1.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                    </svg>
-                    Yeni Araç Ekle
+                    <CalendarPlus size={18} /> Rezervasyon Yap
                   </Link>
                 )}
               </div>
-            )}
+
+            </div>
+          ))}
+        </div>
+      ) : (
+        /* Boş Durum */
+        <div className="text-center py-24 bg-white rounded-[3rem] border border-dashed border-gray-200">
+          <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Car size={40} className="text-gray-200" />
           </div>
-        )}
-      </div>
+          <h3 className="text-xl font-bold text-gray-900">Araç Bulunamadı</h3>
+          <p className="text-gray-400 mt-2 max-w-xs mx-auto text-sm font-medium">
+            Arama kriterlerinize uygun bir araç bulunamadı. Lütfen filtreleri kontrol edin.
+          </p>
+          {(searchTerm || statusFilter !== 'all') && (
+            <button
+              onClick={() => { setSearchTerm(''); setStatusFilter('all'); }}
+              className="mt-8 text-xs font-black text-red-600 uppercase tracking-widest border-b-2 border-red-600 pb-1"
+            >
+              Filtreleri Temizle
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

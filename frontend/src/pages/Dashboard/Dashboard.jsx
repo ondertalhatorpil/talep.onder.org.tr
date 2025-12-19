@@ -4,7 +4,6 @@ import { reservationService, vehicleService } from '../../services/api';
 import useAuthStore from '../../store/authStore';
 
 // Komponentler
-import DashboardHeader from './components/DashboardHeader';
 import StatisticsCards from './components/StatisticsCards';
 import QuickActions from './components/QuickActions';
 import UpcomingReservations from './components/UpcomingReservations';
@@ -72,8 +71,6 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8">
-      {/* Üst Bölüm */}
-      <DashboardHeader user={user} animate={animate} />
       
       {/* İstatistikler */}
       <StatisticsCards 

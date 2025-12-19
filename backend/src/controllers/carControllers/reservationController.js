@@ -258,8 +258,9 @@ const createReservation = async (req, res) => {
 const updateReservation = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, notes } = req.body;
+    const { vehicle_id, start_date_time, end_date_time, purpose, notes } = req.body;
     const userId = req.user.id;
+    const userRole = req.user.role; // ✅ Eklendi
     
     const [reservations] = await db.query('SELECT * FROM reservations WHERE id = ?', [id]);
     if (reservations.length === 0) {
@@ -276,7 +277,7 @@ const updateReservation = async (req, res) => {
     
     const user = users[0];
     
-    // Admin olmayanlar sadece kendi rezervasyonlarını veya kendi departmanlarının rezervasyonlarını güncelleyebilir
+    // Yetki kontrolü
     if (userRole !== 'admin' && 
         reservation.user_id !== userId && 
         reservation.department !== user.department) {
@@ -296,20 +297,25 @@ const updateReservation = async (req, res) => {
         return res.status(404).json({ message: 'Araç bulunamadı' });
       }
       
-      // Aracın aktif olup olmadığını kontrol et
       if (vehicles[0].status !== 'active') {
         return res.status(400).json({ message: 'Bu araç şu anda kullanılamaz' });
       }
     }
     
     // Tarih formatlarını kontrol et
-    let startDate = reservation.start_date_time;
-    let endDate = reservation.end_date_time;
+    let startDate = new Date(reservation.start_date_time);
+    let endDate = new Date(reservation.end_date_time);
     
     if (start_date_time) {
       startDate = new Date(start_date_time);
       if (isNaN(startDate.getTime())) {
         return res.status(400).json({ message: 'Geçersiz başlangıç tarihi formatı' });
+      }
+      
+      // ✅ Sadece yeni tarih girildiğinde geçmiş tarih kontrolü
+      const now = new Date();
+      if (startDate < now) {
+        return res.status(400).json({ message: 'Geçmiş tarihler için rezervasyon yapılamaz' });
       }
     }
     
@@ -323,12 +329,6 @@ const updateReservation = async (req, res) => {
     // Bitiş tarihi başlangıç tarihinden sonra olmalı
     if (endDate <= startDate) {
       return res.status(400).json({ message: 'Bitiş tarihi başlangıç tarihinden sonra olmalı' });
-    }
-    
-    // Geçmiş tarihler için rezervasyon güncellenemez
-    const now = new Date();
-    if (startDate < now) {
-      return res.status(400).json({ message: 'Geçmiş tarihler için rezervasyon güncellenemez' });
     }
     
     // Çakışan rezervasyonları kontrol et
@@ -362,7 +362,7 @@ const updateReservation = async (req, res) => {
         startDate,
         endDate,
         purpose || reservation.purpose,
-        notes,
+        notes || reservation.notes, // ✅ null handling
         newStatus,
         id
       ]
@@ -379,14 +379,12 @@ const updateReservation = async (req, res) => {
       [id]
     );
     
-    
     res.json(updatedReservations[0]);
   } catch (error) {
     console.error('Rezervasyon güncelleme hatası:', error);
     res.status(500).json({ message: 'Sunucu hatası' });
   }
 };
-
 
 
 

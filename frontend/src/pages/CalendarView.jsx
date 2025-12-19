@@ -1,482 +1,178 @@
-// src/pages/Calendar.jsx
-import { useState, useEffect, useMemo } from 'react';
-import { Calendar, dateFnsLocalizer, Views } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay, addHours, isSameDay } from 'date-fns';
-import { tr } from 'date-fns/locale';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list';
+import trLocale from '@fullcalendar/core/locales/tr';
+import { useNavigate } from 'react-router-dom';
+import { 
+  Plus, 
+  Calendar as CalendarIcon,
+  Car
+} from 'lucide-react';
+
 import { reservationService } from '../services/api';
 import useAuthStore from '../store/authStore';
-
-import 'react-big-calendar/lib/css/react-big-calendar.css';
-
-import '../assets/style/calendar.css';
-
-const locales = {
-  'tr': tr,
-};
-
-const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  startOfWeek,
-  getDay,
-  locales,
-});
-
-// Türkçe mesajlar
-const messages = {
-  today: 'Bugün',
-  previous: 'Önceki',
-  next: 'Sonraki',
-  month: 'Ay',
-  week: 'Hafta',
-  day: 'Gün',
-  agenda: 'Ajanda',
-  date: 'Tarih',
-  time: 'Saat',
-  event: 'Etkinlik',
-  allDay: 'Tüm gün',
-  noEventsInRange: 'Bu aralıkta hiç rezervasyon yok.',
-};
 
 const CalendarView = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [selectedVehicle, setSelectedVehicle] = useState('all');
   const [vehicles, setVehicles] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [view, setView] = useState(Views.WEEK);
-  const [departments, setDepartments] = useState([]);
-  const [selectedDepartment, setSelectedDepartment] = useState('all');
-  const [showLegend, setShowLegend] = useState(true);
-  
-  const isAdmin = user?.role === 'admin';
-  
-  // Rezervasyonları getir
+
   useEffect(() => {
     const fetchReservations = async () => {
       try {
         setLoading(true);
         const data = await reservationService.getAllReservations();
         
-        // Takvim için rezervasyonları formatla
-        const formattedReservations = data
+        const formatted = data
           .filter(res => res.status === 'approved' || res.status === 'pending')
           .map(res => ({
             id: res.id,
-            title: `${res.brand} ${res.model} - ${res.username}`,
-            start: new Date(res.start_date_time),
-            end: new Date(res.end_date_time),
-            resource: {
-              ...res,
-              status: res.status,
-              vehicle_id: res.vehicle_id,
-              department: res.department
-            }
+            title: `${res.brand} ${res.model}`,
+            start: res.start_date_time,
+            end: res.end_date_time,
+            backgroundColor: res.status === 'approved' ? '#fef2f2' : '#fffbeb',
+            borderColor: res.status === 'approved' ? '#fca5a5' : '#fcd34d',
+            textColor: res.status === 'approved' ? '#991b1b' : '#92400e',
+            extendedProps: { ...res }
           }));
         
-        setReservations(formattedReservations);
-        
-        // Rezervasyonlarda bulunan araçları topla
-        const uniqueVehicles = [...new Set(data.map(res => res.vehicle_id))].map(id => {
-          const reservation = data.find(res => res.vehicle_id === id);
-          return {
-            id: id,
-            name: `${reservation.brand} ${reservation.model} (${reservation.license_plate})`
-          };
-        });
-        
+        setReservations(formatted);
+        const uniqueVehicles = [...new Set(data.map(r => JSON.stringify({id: r.vehicle_id, name: `${r.brand} ${r.model}`})))]
+          .map(s => JSON.parse(s));
         setVehicles(uniqueVehicles);
-        
-        // Rezervasyonlarda bulunan departmanları topla
-        const uniqueDepartments = [...new Set(data.map(res => res.department))];
-        setDepartments(uniqueDepartments);
-        
         setLoading(false);
       } catch (err) {
-        setError('Rezervasyonlar yüklenirken bir hata oluştu');
         setLoading(false);
-        console.error(err);
       }
     };
-    
     fetchReservations();
   }, []);
-  
-  // Etkinlik stillerini ayarla
-  const eventStyleGetter = (event) => {
-    let backgroundColor;
-    let borderColor;
-    
-    // Durum bazlı renkler
-    if (event.resource.status === 'approved') {
-      backgroundColor = '#065f46'; // green-800
-      borderColor = '#047857'; // green-700
-    } else if (event.resource.status === 'pending') {
-      backgroundColor = '#92400e'; // amber-800
-      borderColor = '#b45309'; // amber-700
-    }
-    
-    // Her departman için farklı renk tonları
-    if (event.resource.department === 'Satış') {
-      backgroundColor = event.resource.status === 'approved' ? '#064e3b' : '#783c00';
-      borderColor = event.resource.status === 'approved' ? '#047857' : '#b45309';
-    } else if (event.resource.department === 'Muhasebe') {
-      backgroundColor = event.resource.status === 'approved' ? '#0f766e' : '#9a3412';
-      borderColor = event.resource.status === 'approved' ? '#14b8a6' : '#ea580c';
-    } else if (event.resource.department === 'Lojistik') {
-      backgroundColor = event.resource.status === 'approved' ? '#0e7490' : '#854d0e';
-      borderColor = event.resource.status === 'approved' ? '#06b6d4' : '#d97706';
-    } else if (event.resource.department === 'Yönetim') {
-      backgroundColor = event.resource.status === 'approved' ? '#0c4a6e' : '#7e22ce';
-      borderColor = event.resource.status === 'approved' ? '#0284c7' : '#a855f7';
-    }
-    
-    const style = {
-      backgroundColor,
-      borderColor,
-      color: 'white',
-      borderWidth: '2px',
-      borderStyle: 'solid',
-      borderRadius: '4px',
-      opacity: 0.9,
-      display: 'block',
-      fontWeight: 600,
-      fontSize: '0.8rem',
-      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-      padding: '2px 5px',
-      overflow: 'hidden'
-    };
-    
-    return { style };
-  };
-  
-  // Seçili araca ve departmana göre filtre uygula
+
   const filteredEvents = useMemo(() => {
-    let filtered = [...reservations];
-    
-    if (selectedVehicle !== 'all') {
-      filtered = filtered.filter(event => 
-        event.resource.vehicle_id === parseInt(selectedVehicle)
-      );
-    }
-    
-    if (selectedDepartment !== 'all') {
-      filtered = filtered.filter(event => 
-        event.resource.department === selectedDepartment
-      );
-    }
-    
-    return filtered;
-  }, [reservations, selectedVehicle, selectedDepartment]);
-  
-  // Etkinliğe tıklama işlemi
-  const handleEventClick = (event) => {
-    navigate(`/reservations/${event.id}`);
-  };
-  
-  // Takvimde yeni etkinlik ekleme işlemi
-  const handleSelectSlot = ({ start, end }) => {
-    // En az 30 dakikalık bir aralık seçilmesini sağla
-    const minEndTime = addHours(start, 0.5);
-    const adjustedEnd = end < minEndTime ? minEndTime : end;
-    
-    // Yeni rezervasyon formuyla tarih/saat parametrelerini geçir
-    navigate(`/reservations/new?start=${start.toISOString()}&end=${adjustedEnd.toISOString()}`);
-  };
-  
-  // Özel günlük görünüm bileşeni
-  const DayHeaderFormat = ({ date, localizer }) => {
-    const isToday = isSameDay(date, new Date());
-    
+    return selectedVehicle === 'all' 
+      ? reservations 
+      : reservations.filter(e => e.extendedProps.vehicle_id === parseInt(selectedVehicle));
+  }, [reservations, selectedVehicle]);
+
+  const renderEventContent = (eventInfo) => {
+    const isApproved = eventInfo.event.extendedProps.status === 'approved';
     return (
-      <div className={`day-header ${isToday ? 'today' : ''}`}>
-        <span className="day-name">{localizer.format(date, 'ddd', 'tr')}</span>
-        <span className="day-number">{localizer.format(date, 'd', 'tr')}</span>
+      <div className="flex items-center gap-1 px-1 py-0.5 md:px-2 md:py-1 overflow-hidden">
+        <div className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full shrink-0 ${isApproved ? 'bg-red-600' : 'bg-amber-500 animate-pulse'}`} />
+        <span className="truncate font-bold text-[8px] sm:text-[9px] md:text-[11px] uppercase tracking-tighter leading-tight">
+          {eventInfo.event.title}
+        </span>
       </div>
     );
   };
-  
-  // Özel zaman slot oluşturucu
-  const dayPropGetter = (date) => {
-    const isToday = isSameDay(date, new Date());
-    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-    
-    return {
-      className: `${isToday ? 'today-cell' : ''} ${isWeekend ? 'weekend-cell' : ''}`,
-    };
-  };
-  
-  // Yükleme göstergesi
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
-  
+
+  if (loading) return (
+    <div className="flex flex-col h-96 items-center justify-center space-y-4">
+      <div className="w-10 h-10 border-4 border-red-100 border-t-red-600 rounded-full animate-spin" />
+      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Yükleniyor</p>
+    </div>
+  );
+
   return (
-    <div>
-      <div className="sm:flex sm:items-center sm:justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Takvim Görünümü</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            {isAdmin 
-              ? 'Tüm departmanların rezervasyonlarını takvim üzerinde görüntüleyin' 
-              : 'Departmanınızın rezervasyonlarını takvim üzerinde görüntüleyin'}
-          </p>
+    <div className="max-w-7xl mx-auto space-y-4 md:space-y-8 pb-10 animate-fadeIn px-2 md:px-0">
+      {/* Üst Bar */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="px-1">
+          <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center mb-1">
+            <span className="w-5 h-[1px] bg-red-600 mr-2"></span>
+            Planlama
+          </h2>
+          <h1 className="text-2xl md:text-4xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+            Rezervasyon <span className="text-red-600">Takvimi</span>
+          </h1>
         </div>
-        <div className="mt-4 flex flex-wrap gap-2 sm:mt-0">
-          {showLegend ? (
-            <button 
-              onClick={() => setShowLegend(false)} 
-              className="text-sm text-gray-600 bg-white rounded-md shadow px-2 py-1 flex items-center"
-            >
-              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              Açıklamayı Gizle
-            </button>
-          ) : (
-            <button 
-              onClick={() => setShowLegend(true)} 
-              className="text-sm text-gray-600 bg-white rounded-md shadow px-2 py-1 flex items-center"
-            >
-              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Açıklamayı Göster
-            </button>
-          )}
-        </div>
-      </div>
-      
-      {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Filtreler ve Kontroller */}
-      <div className="bg-white shadow rounded-lg p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          <div>
-            <label htmlFor="vehicle" className="form-label">Araç</label>
-            <select
-              id="vehicle"
-              className="form-input"
-              value={selectedVehicle}
+        
+        <div className="flex flex-col sm:flex-row items-center gap-2 md:gap-3 bg-white p-2 rounded-2xl md:rounded-[2rem] border border-gray-100 shadow-sm">
+          <div className="relative group w-full sm:w-auto">
+            <Car className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-red-500 transition-colors" size={16} />
+            <select 
+              value={selectedVehicle} 
               onChange={(e) => setSelectedVehicle(e.target.value)}
+              className="w-full pl-11 pr-8 py-2.5 bg-gray-50 border-none rounded-xl md:rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest text-gray-700 focus:ring-2 focus:ring-red-500/10 cursor-pointer appearance-none min-w-full sm:min-w-[200px]"
             >
-              <option value="all">Tüm Araçlar</option>
-              {vehicles.map((vehicle) => (
-                <option key={vehicle.id} value={vehicle.id}>
-                  {vehicle.name}
-                </option>
-              ))}
+              <option value="all">Tüm Filo</option>
+              {vehicles.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
             </select>
           </div>
-          
-          {isAdmin && (
-            <div>
-              <label htmlFor="department" className="form-label">Departman</label>
-              <select
-                id="department"
-                className="form-input"
-                value={selectedDepartment}
-                onChange={(e) => setSelectedDepartment(e.target.value)}
-              >
-                <option value="all">Tüm Departmanlar</option>
-                {departments.map((dept) => (
-                  <option key={dept} value={dept}>
-                    {dept}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-          
-          <div>
-            <label htmlFor="view" className="form-label">Görünüm</label>
-            <select
-              id="view"
-              className="form-input"
-              value={view}
-              onChange={(e) => setView(e.target.value)}
-            >
-              <option value={Views.MONTH}>Aylık</option>
-              <option value={Views.WEEK}>Haftalık</option>
-              <option value={Views.DAY}>Günlük</option>
-              <option value={Views.AGENDA}>Ajanda</option>
-            </select>
-          </div>
-          
-          <div>
-            <label htmlFor="date" className="form-label">Tarih</label>
-            <input
-              type="date"
-              id="date"
-              className="form-input"
-              value={format(selectedDate, 'yyyy-MM-dd')}
-              onChange={(e) => setSelectedDate(new Date(e.target.value))}
-            />
-          </div>
-        </div>
-      </div>
-      
-      {/* Efsane/Açıklama */}
-      {showLegend && (
-        <div className="bg-white shadow rounded-lg p-4 mb-6">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Durum ve Departman Renkleri</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="flex items-center">
-              <div className="w-4 h-4 rounded mr-2" style={{ backgroundColor: '#065f46' }}></div>
-              <span className="text-sm text-gray-600">Onaylanmış</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-4 h-4 rounded mr-2" style={{ backgroundColor: '#92400e' }}></div>
-              <span className="text-sm text-gray-600">Beklemede</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-4 h-4 rounded mr-2" style={{ backgroundColor: '#064e3b' }}></div>
-              <span className="text-sm text-gray-600">Teşkilat</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-4 h-4 rounded mr-2" style={{ backgroundColor: '#0f766e' }}></div>
-              <span className="text-sm text-gray-600">Öncü Spor</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-4 h-4 rounded mr-2" style={{ backgroundColor: '#0e7490' }}></div>
-              <span className="text-sm text-gray-600">ÖNDER Genç</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-4 h-4 rounded mr-2" style={{ backgroundColor: '#0c4a6e' }}></div>
-              <span className="text-sm text-gray-600">İktisadi İşletmeler</span>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Takvim */}
-      <div className="bg-white p-4 rounded-lg shadow overflow-hidden">
-        <div className="calendar-container" style={{ height: 700 }}>
-          <Calendar
-            localizer={localizer}
-            events={filteredEvents}
-            startAccessor="start"
-            endAccessor="end"
-            style={{ height: '100%' }}
-            messages={messages}
-            eventPropGetter={eventStyleGetter}
-            dayPropGetter={dayPropGetter}
-            onSelectEvent={handleEventClick}
-            onSelectSlot={handleSelectSlot}
-            selectable
-            culture="tr"
-            views={{
-              month: true,
-              week: true,
-              day: true
-              }}
-            view={view}
-            onView={(newView) => setView(newView)}
-            date={selectedDate}
-            onNavigate={(date) => setSelectedDate(date)}
-            components={{
-              toolbar: CustomToolbar,
-              day: { header: DayHeaderFormat },
-              event: CustomEvent
-            }}
-            timeslots={2}
-            step={30}
-            formats={{
-              timeGutterFormat: (date, culture, localizer) =>
-                localizer.format(date, 'HH:mm', culture),
-              selectRangeFormat: ({ start, end }, culture, localizer) =>
-                `${localizer.format(start, 'HH:mm', culture)} - ${localizer.format(end, 'HH:mm', culture)}`,
-              eventTimeRangeFormat: ({ start, end }, culture, localizer) =>
-                `${localizer.format(start, 'HH:mm', culture)} - ${localizer.format(end, 'HH:mm', culture)}`,
-              agendaTimeRangeFormat: ({ start, end }, culture, localizer) =>
-                `${localizer.format(start, 'HH:mm', culture)} - ${localizer.format(end, 'HH:mm', culture)}`,
-            }}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Özel olay bileşeni
-const CustomEvent = ({ event }) => {
-  return (
-    <div className="rbc-event-content">
-      <div className="font-semibold">{event.title}</div>
-      <div className="text-xs mt-1">
-        {format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}
-      </div>
-    </div>
-  );
-};
-
-// Özel araç çubuğu
-const CustomToolbar = (toolbar) => {
-  const navigate = (action) => {
-    toolbar.onNavigate(action);
-  };
-  
-  const viewNamesMap = {
-    month: 'Ay',
-    week: 'Hafta',
-    day: 'Gün',
-    agenda: 'Ajanda'
-  };
-  
-  return (
-    <div className="rbc-toolbar">
-      <div className="rbc-btn-group">
-        <button type="button" onClick={() => navigate('TODAY')} className="toolbar-button">
-          Bugün
-        </button>
-        <button type="button" onClick={() => navigate('PREV')} className="toolbar-button">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <button type="button" onClick={() => navigate('NEXT')} className="toolbar-button">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
-      
-      <span className="rbc-toolbar-label font-medium">
-        {format(toolbar.date, 'MMMM yyyy', { locale: tr })}
-      </span>
-      
-      <div className="rbc-btn-group">
-        {toolbar.views.map(view => (
-          <button
-            key={view}
-            type="button"
-            onClick={() => toolbar.onView(view)}
-            className={`toolbar-button ${toolbar.view === view ? 'active' : ''}`}
+          <button 
+            onClick={() => navigate('/reservations/new')}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl md:rounded-[1.5rem] transition-all shadow-lg shadow-red-100 active:scale-95 group"
           >
-            {viewNamesMap[view] || view}
+            <Plus size={16} />
+            <span className="font-black text-[11px] uppercase tracking-widest">Yeni</span>
           </button>
-        ))}
+        </div>
+      </div>
+
+      {/* Takvim Kartı */}
+      <div className="bg-white rounded-3xl md:rounded-[2.5rem] shadow-[0_15px_40px_rgba(0,0,0,0.04)] border border-gray-100 overflow-hidden p-2 md:p-8 relative">
+        <style>{`
+          /* Mobil Ölçeklendirme Kuralları */
+          .fc { font-family: inherit; font-size: 0.85rem; }
+          @media (max-width: 768px) {
+            .fc { font-size: 0.65rem; }
+            .fc .fc-toolbar { flex-direction: column; gap: 8px; }
+            .fc .fc-toolbar-title { font-size: 0.9rem !important; }
+            .fc .fc-button { padding: 0.4rem 0.8rem !important; font-size: 0.6rem !important; }
+            .fc .fc-col-header-cell-cushion { font-size: 0.55rem !important; letter-spacing: 0.05em !important; }
+            .fc .fc-daygrid-day-number { font-size: 0.7rem !important; padding: 4px 6px !important; }
+            .fc .fc-daygrid-event-h-harness { margin-top: 1px !important; }
+          }
+          
+          .fc { --fc-border-color: #f3f4f6; --fc-today-bg-color: #fef2f2; }
+          .fc .fc-toolbar-title { font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; color: #111827; }
+          .fc .fc-button-primary { background: #f9fafb; border: 1px solid #f3f4f6; color: #374151; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; border-radius: 0.75rem !important; transition: all 0.2s; }
+          .fc .fc-button-primary:hover { background: #f3f4f6; color: #111827; }
+          .fc .fc-button-active { background: #111827 !important; border-color: #111827 !important; color: #fff !important; }
+          .fc .fc-col-header-cell { padding: 0.5rem 0; background: #fafafa; }
+          .fc .fc-col-header-cell-cushion { font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #9ca3af; }
+          .fc .fc-daygrid-day-number { font-weight: 800; color: #4b5563; }
+          .fc .fc-event { border-radius: 4px; border-width: 1px; margin: 1px 2px !important; }
+          .fc .fc-daygrid-more-link { font-size: 0.6rem; font-weight: 900; color: #ef4444; text-transform: uppercase; padding-left: 4px; }
+        `}</style>
+        
+        <FullCalendar
+          plugins={[dayGridPlugin, interactionPlugin, listPlugin]}
+          initialView={window.innerWidth < 768 ? 'listMonth' : 'dayGridMonth'} // Mobilde direkt liste ile başlayabilir
+          headerToolbar={{
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,listMonth'
+          }}
+          buttonText={{
+            today: 'Bugün',
+            month: 'Aylık',
+            list: 'Liste'
+          }}
+          locale={trLocale}
+          events={filteredEvents}
+          height="auto"
+          eventContent={renderEventContent}
+          eventClick={(info) => navigate(`/reservations/${info.event.id}`)}
+          dayMaxEvents={2} // Mobilde çakışmayı önlemek için 2'den sonrasını gizle
+        />
+      </div>
+
+      {/* Legend / Bilgilendirme */}
+      <div className="flex flex-row justify-center gap-4 md:gap-8 pt-2">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-red-600"></span>
+          <span className="text-[8px] md:text-[10px] font-black text-gray-500 uppercase tracking-widest">Onaylı</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+          <span className="text-[8px] md:text-[10px] font-black text-gray-500 uppercase tracking-widest">Bekleyen</span>
+        </div>
       </div>
     </div>
   );
