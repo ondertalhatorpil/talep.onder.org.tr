@@ -1,26 +1,56 @@
-// backend/controllers/reservationController.js
+// backend/controllers/carControllers/reservationController.js
 const db = require('../../config/db');
 
-// Tarih formatını UTC ISO string'e çeviren yardımcı fonksiyon
+/**
+ * MySQL'den gelen tarihleri UTC olarak formatla
+ * MySQL datetime'ı string olarak gelir: "2025-12-20 10:00:00"
+ * Bunu UTC timezone'da ISO string'e çevir
+ */
+const formatDateToUTC = (mysqlDatetime) => {
+  if (!mysqlDatetime) return null;
+  
+  // MySQL datetime string'ini parçala: "2025-12-20 10:00:00"
+  const dateStr = mysqlDatetime.replace(' ', 'T') + 'Z'; // UTC olarak işaretle
+  return dateStr; // "2025-12-20T10:00:00Z"
+};
+
+/**
+ * Rezervasyon objelerinin tarihlerini formatla
+ */
 const formatReservationDates = (reservation) => {
+  if (!reservation) return null;
+  
   return {
     ...reservation,
-    start_date_time: reservation.start_date_time 
-      ? new Date(reservation.start_date_time).toISOString() 
-      : null,
-    end_date_time: reservation.end_date_time 
-      ? new Date(reservation.end_date_time).toISOString() 
-      : null,
-    approved_at: reservation.approved_at 
-      ? new Date(reservation.approved_at).toISOString() 
-      : null,
-    created_at: reservation.created_at 
-      ? new Date(reservation.created_at).toISOString() 
-      : null
+    start_date_time: formatDateToUTC(reservation.start_date_time),
+    end_date_time: formatDateToUTC(reservation.end_date_time),
+    approved_at: formatDateToUTC(reservation.approved_at),
+    created_at: formatDateToUTC(reservation.created_at)
   };
 };
 
-// Tüm rezervasyonları getir (admin tümünü, kullanıcı kendi departmanınınkileri)
+/**
+ * Frontend'den gelen ISO tarihini MySQL datetime formatına çevir
+ * "2025-12-20T10:00:00" -> "2025-12-20 10:00:00"
+ */
+const parseISOToMySQL = (isoString) => {
+  if (!isoString) return null;
+  
+  // ISO string'i Date objesine çevir
+  const date = new Date(isoString);
+  
+  // MySQL datetime formatına çevir (UTC olarak)
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  const hours = String(date.getUTCHours()).padStart(2, '0');
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+  const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+  
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
+
+// Tüm rezervasyonları getir
 const getAllReservations = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -39,7 +69,6 @@ const getAllReservations = async (req, res) => {
     const queryParams = [];
     const filters = [];
     
-    // Admin tüm rezervasyonları görebilir, normal kullanıcılar sadece kendi departmanlarınınkileri
     if (userRole !== 'admin') {
       const [users] = await db.query('SELECT department FROM users WHERE id = ?', [userId]);
       if (users.length > 0) {
@@ -48,18 +77,15 @@ const getAllReservations = async (req, res) => {
       }
     }
     
-    // Durum filtresi
     if (status) {
       filters.push('r.status = ?');
       queryParams.push(status);
     }
     
-    // Filtreleri ekle
     if (filters.length > 0) {
       query += ' WHERE ' + filters.join(' AND ');
     }
     
-    // Sıralama
     query += ' ORDER BY r.start_date_time DESC';
     
     const [reservations] = await db.query(query, queryParams);
@@ -98,7 +124,6 @@ const getReservationById = async (req, res) => {
     
     const reservation = reservations[0];
     
-    // Admin olmayan kullanıcılar sadece kendi departmanlarının rezervasyonlarını görebilir
     if (userRole !== 'admin') {
       const [users] = await db.query('SELECT department FROM users WHERE id = ?', [userId]);
       if (users.length > 0 && users[0].department !== reservation.department) {
@@ -106,7 +131,6 @@ const getReservationById = async (req, res) => {
       }
     }
     
-    // Tarihleri UTC formatına çevir
     const formattedReservation = formatReservationDates(reservation);
     
     res.json(formattedReservation);
@@ -123,8 +147,6 @@ const sendSMS = async (phoneNumber, message) => {
     const password = 'yO91GQKA39Rs';
     const credentials = Buffer.from(`${username}:${password}`).toString('base64');
 
-    console.log('SMS gönderiliyor:', phoneNumber);
-
     const smsData = {
       type: 1,
       sendingType: 0,
@@ -138,8 +160,6 @@ const sendSMS = async (phoneNumber, message) => {
       skipAhsQuery: true,
       recipientType: 0
     };
-
-    console.log('SMS isteği:', JSON.stringify(smsData, null, 2));
     
     const response = await fetch('https://panel4.ekomesaj.com:9588/sms/create', {
       method: 'POST',
@@ -149,8 +169,6 @@ const sendSMS = async (phoneNumber, message) => {
       },
       body: JSON.stringify(smsData)
     });
-    
-    console.log('API yanıt durumu:', response.status);
 
     const result = await response.json();
     
@@ -188,19 +206,18 @@ const createReservation = async (req, res) => {
       return res.status(400).json({ message: 'Bu araç şu anda kullanılamaz' });
     }
     
-    const startDate = new Date(start_date_time);
-    const endDate = new Date(end_date_time);
+    // Frontend'den gelen tarihleri MySQL formatına çevir
+    const startDate = parseISOToMySQL(start_date_time);
+    const endDate = parseISOToMySQL(end_date_time);
     
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    if (!startDate || !endDate) {
       return res.status(400).json({ message: 'Geçersiz tarih formatı' });
     }
     
-    if (endDate <= startDate) {
-      return res.status(400).json({ message: 'Bitiş tarihi başlangıç tarihinden sonra olmalı' });
-    }
-    
     const now = new Date();
-    if (startDate < now) {
+    const startDateObj = new Date(start_date_time);
+    
+    if (startDateObj < now) {
       return res.status(400).json({ message: 'Geçmiş tarihler için rezervasyon yapılamaz' });
     }
     
@@ -241,18 +258,15 @@ const createReservation = async (req, res) => {
     
     const reservation = newReservations[0];
     
-    // SMS bildirimi gönderme
-    const startDateStr = new Date(reservation.start_date_time).toLocaleDateString('tr-TR');
-    const endDateStr = new Date(reservation.end_date_time).toLocaleDateString('tr-TR');
+    // SMS bildirimi
+    const startDateStr = new Date(start_date_time).toLocaleDateString('tr-TR');
+    const endDateStr = new Date(end_date_time).toLocaleDateString('tr-TR');
     const dateRange = `${startDateStr} - ${endDateStr}`;
     const vehicleInfo = `${reservation.brand} ${reservation.model} (${reservation.license_plate})`;
+    const smsContent = `Araç Talebi Alındı: ${reservation.username} kişisinden ${dateRange} tarihleri için ${vehicleInfo} talebi oluşturuldu!`;
     
-    const smsContent = `Araç Talebi Alındı: ${reservation.username} kişisinden ${dateRange} tarihleri için ${vehicleInfo} talebi oluşturuldu bir an önce sisteme girip talebi cevaplaman gerekli!`;
+    await sendSMS('05447350111', smsContent);
     
-    const notificationNumber = '05447350111';
-    await sendSMS(notificationNumber, smsContent);
-    
-    // Tarihleri UTC formatına çevir
     const formattedReservation = formatReservationDates(reservation);
     
     res.status(201).json(formattedReservation);
@@ -305,31 +319,9 @@ const updateReservation = async (req, res) => {
       }
     }
     
-    let startDate = new Date(reservation.start_date_time);
-    let endDate = new Date(reservation.end_date_time);
-    
-    if (start_date_time) {
-      startDate = new Date(start_date_time);
-      if (isNaN(startDate.getTime())) {
-        return res.status(400).json({ message: 'Geçersiz başlangıç tarihi formatı' });
-      }
-      
-      const now = new Date();
-      if (startDate < now) {
-        return res.status(400).json({ message: 'Geçmiş tarihler için rezervasyon yapılamaz' });
-      }
-    }
-    
-    if (end_date_time) {
-      endDate = new Date(end_date_time);
-      if (isNaN(endDate.getTime())) {
-        return res.status(400).json({ message: 'Geçersiz bitiş tarihi formatı' });
-      }
-    }
-    
-    if (endDate <= startDate) {
-      return res.status(400).json({ message: 'Bitiş tarihi başlangıç tarihinden sonra olmalı' });
-    }
+    // Tarihleri MySQL formatına çevir
+    const startDate = start_date_time ? parseISOToMySQL(start_date_time) : reservation.start_date_time;
+    const endDate = end_date_time ? parseISOToMySQL(end_date_time) : reservation.end_date_time;
     
     const vehicleIdToCheck = vehicle_id || reservation.vehicle_id;
     const [conflictingReservations] = await db.query(
@@ -360,7 +352,7 @@ const updateReservation = async (req, res) => {
         startDate,
         endDate,
         purpose || reservation.purpose,
-        notes || reservation.notes,
+        notes !== undefined ? notes : reservation.notes,
         newStatus,
         id
       ]
@@ -377,7 +369,6 @@ const updateReservation = async (req, res) => {
       [id]
     );
     
-    // Tarihleri UTC formatına çevir
     const formattedReservation = formatReservationDates(updatedReservations[0]);
     
     res.json(formattedReservation);
@@ -423,7 +414,7 @@ const updateReservationStatus = async (req, res) => {
     
     if (status === 'approved') {
       approvedBy = userId;
-      approvedAt = new Date();
+      approvedAt = parseISOToMySQL(new Date().toISOString());
       
       const [conflictingReservations] = await db.query(
         `SELECT * FROM reservations 
@@ -447,8 +438,7 @@ const updateReservationStatus = async (req, res) => {
       
       if (conflictingReservations.length > 0) {
         return res.status(409).json({
-          message: 'Bu araç için seçilen tarih aralığında onaylanmış başka rezervasyon var',
-          conflicts: conflictingReservations
+          message: 'Bu araç için seçilen tarih aralığında onaylanmış başka rezervasyon var'
         });
       }
     }
@@ -473,18 +463,20 @@ const updateReservationStatus = async (req, res) => {
     
     const updatedReservation = updatedReservations[0];
     
-    // SMS bildirimi gönderme
-    const startDateStr = new Date(updatedReservation.start_date_time).toLocaleDateString('tr-TR');
-    const endDateStr = new Date(updatedReservation.end_date_time).toLocaleDateString('tr-TR');
+    // SMS bildirimi
+    const startDateUTC = formatDateToUTC(updatedReservation.start_date_time);
+    const endDateUTC = formatDateToUTC(updatedReservation.end_date_time);
+    const startDateStr = new Date(startDateUTC).toLocaleDateString('tr-TR');
+    const endDateStr = new Date(endDateUTC).toLocaleDateString('tr-TR');
     const dateRange = `${startDateStr} - ${endDateStr}`;
     const vehicleInfo = `${updatedReservation.brand} ${updatedReservation.model} (${updatedReservation.license_plate})`;
     
     let smsContent = '';
     
     if (status === 'approved') {
-      smsContent = `Sayın ${updatedReservation.username}, ${dateRange} tarihleri için ${vehicleInfo} araç talebiniz ONAYLANMIŞTIR. İyi günlerde kullanmanızı dileriz.`;
+      smsContent = `Sayın ${updatedReservation.username}, ${dateRange} tarihleri için ${vehicleInfo} araç talebiniz ONAYLANMIŞTIR.`;
     } else if (status === 'rejected') {
-      smsContent = `Sayın ${updatedReservation.username}, ${dateRange} tarihleri için ${vehicleInfo} araç talebiniz REDDEDİLMİŞTİR. Detaylı bilgi için yönetici ile iletişime geçebilirsiniz.`;
+      smsContent = `Sayın ${updatedReservation.username}, ${dateRange} tarihleri için ${vehicleInfo} araç talebiniz REDDEDİLMİŞTİR.`;
     } else if (status === 'cancelled') {
       smsContent = `Sayın ${updatedReservation.username}, ${dateRange} tarihleri için ${vehicleInfo} araç talebiniz İPTAL EDİLMİŞTİR.`;
     }
@@ -492,15 +484,11 @@ const updateReservationStatus = async (req, res) => {
     if (smsContent && updatedReservation.phone) {
       try {
         await sendSMS(updatedReservation.phone, smsContent);
-        console.log("SMS gönderildi: " + updatedReservation.phone);
       } catch (smsError) {
         console.error("SMS gönderiminde hata:", smsError);
       }
-    } else if (!updatedReservation.phone) {
-      console.log("Kullanıcının telefon numarası bulunamadı:", updatedReservation.username);
     }
     
-    // Tarihleri UTC formatına çevir
     const formattedReservation = formatReservationDates(updatedReservation);
     
     res.json(formattedReservation);
@@ -548,7 +536,6 @@ const cancelReservation = async (req, res) => {
       [id]
     );
     
-    // Tarihleri UTC formatına çevir
     const formattedReservation = formatReservationDates(updatedReservations[0]);
     
     res.json(formattedReservation);
@@ -584,15 +571,12 @@ const getAvailableVehicles = async (req, res) => {
       return res.status(400).json({ message: 'Başlangıç ve bitiş tarihleri gerekli' });
     }
     
-    const startDate = new Date(start_date_time);
-    const endDate = new Date(end_date_time);
+    // Frontend'den gelen tarihleri MySQL formatına çevir
+    const startDate = parseISOToMySQL(start_date_time);
+    const endDate = parseISOToMySQL(end_date_time);
     
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    if (!startDate || !endDate) {
       return res.status(400).json({ message: 'Geçersiz tarih formatı' });
-    }
-    
-    if (endDate <= startDate) {
-      return res.status(400).json({ message: 'Bitiş tarihi başlangıç tarihinden sonra olmalı' });
     }
     
     const [vehicles] = await db.query(
@@ -649,14 +633,9 @@ const PublicCalendar = async (req, res) => {
       ORDER BY r.start_date_time ASC`
     );
 
-    const formattedReservations = Array.isArray(reservations) ? reservations : [];
+    const formattedReservations = reservations.map(formatReservationDates);
     
-    // Tarihleri UTC formatına çevir
-    const utcReservations = formattedReservations.map(formatReservationDates);
-
-    console.log('Sending reservations:', utcReservations);
-
-    res.json(utcReservations);
+    res.json(formattedReservations);
   } catch (error) {
     console.error('Herkese açık rezervasyonlar getirme hatası:', error);
     res.status(500).json({ message: 'Sunucu hatası' });
