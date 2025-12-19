@@ -18,6 +18,19 @@ const Reservations = () => {
 
   const isAdmin = user?.role === 'admin';
 
+ useEffect(() => {
+  if (sortedReservations.length > 0) {
+    const first = sortedReservations[0];
+    console.log('🔍 DEBUG - Reservation Date Check:');
+    console.log('Raw API value:', first.start_date_time);
+    console.log('Type:', typeof first.start_date_time);
+    console.log('Parsed Date:', new Date(first.start_date_time));
+    console.log('ISO String:', new Date(first.start_date_time).toISOString());
+    console.log('Local String (TR):', new Date(first.start_date_time).toLocaleString('tr-TR'));
+    console.log('Format with date-fns:', format(new Date(first.start_date_time), 'PPP HH:mm', { locale: tr }));
+  }
+}, [sortedReservations]);
+
   useEffect(() => {
     const fetchReservations = async () => {
       try {
