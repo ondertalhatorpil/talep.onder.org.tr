@@ -1,13 +1,19 @@
-// backend/controllers/carControllers/reservationController.js
 const db = require('../../config/db');
 
 
 const formatDateToUTC = (mysqlDatetime) => {
   if (!mysqlDatetime) return null;
   
+  // 🔍 DEBUG: Ne geldiğini görelim
+  console.log('🔍 formatDateToUTC input:', {
+    value: mysqlDatetime,
+    type: typeof mysqlDatetime,
+    isDate: mysqlDatetime instanceof Date
+  });
+  
   // Eğer zaten Date object ise
   if (mysqlDatetime instanceof Date) {
-    // Date object'leri UTC olarak döndür
+    console.log('📅 Date object detected, using UTC components');
     const year = mysqlDatetime.getUTCFullYear();
     const month = String(mysqlDatetime.getUTCMonth() + 1).padStart(2, '0');
     const day = String(mysqlDatetime.getUTCDate()).padStart(2, '0');
@@ -15,20 +21,20 @@ const formatDateToUTC = (mysqlDatetime) => {
     const minutes = String(mysqlDatetime.getUTCMinutes()).padStart(2, '0');
     const seconds = String(mysqlDatetime.getUTCSeconds()).padStart(2, '0');
     
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}Z`;
+    const result = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}Z`;
+    console.log('✅ Result:', result);
+    return result;
   }
   
   // Eğer string ise
   if (typeof mysqlDatetime === 'string') {
-    // ✅ CRITICAL FIX: MySQL datetime string'i DIREKT UTC olarak işaretle
-    // "2025-12-19 10:00:00" -> "2025-12-19T10:00:00Z"
-    // Date object'e çevirme çünkü local timezone kullanır!
+    console.log('📝 String detected, adding Z suffix');
     const dateStr = mysqlDatetime.replace(' ', 'T') + 'Z';
+    console.log('✅ Result:', dateStr);
     return dateStr;
   }
   
-  // Diğer durumlar için null döndür
-  console.error('Invalid date format:', mysqlDatetime);
+  console.error('❌ Invalid date format:', mysqlDatetime);
   return null;
 };
 
