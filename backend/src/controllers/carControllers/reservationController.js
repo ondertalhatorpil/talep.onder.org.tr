@@ -1,43 +1,73 @@
 const db = require('../../config/db');
 
+/**
+ * Frontend'den gelen tarihi MySQL formatına çevir
+ * Türkiye saati (GMT+3) olarak gelir, UTC'ye çevirir
+ * 
+ * Örnek:
+ * Input: "2025-12-19T19:00" (Kullanıcı Türkiye'de 19:00 seçti)
+ * Output: "2025-12-19 16:00:00" (MySQL'de UTC olarak saklanır)
+ */
+const parseISOToMySQL = (isoString) => {
+  if (!isoString) return null;
+  
+  console.log('🔍 parseISOToMySQL input:', isoString);
+  
+  // ✅ SORUN BURADA ÇÖZÜLÜYOR!
+  // Eğer timezone bilgisi yoksa (sadece "2025-12-19T19:00" gibi), 
+  // bunu Türkiye saati (GMT+3) olarak kabul et
+  let date;
+  
+  if (!isoString.includes('Z') && !isoString.includes('+') && !isoString.includes('-', 11)) {
+    // Timezone bilgisi yok, Türkiye saati olarak kabul et
+    console.log('⏰ Timezone yok, Türkiye saati olarak kabul ediliyor (GMT+3)');
+    date = new Date(isoString + '+03:00');
+  } else {
+    // Zaten timezone bilgisi var
+    console.log('✅ Timezone var, direkt parse ediliyor');
+    date = new Date(isoString);
+  }
+  
+  // MySQL datetime formatına çevir (UTC olarak)
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  const hours = String(date.getUTCHours()).padStart(2, '0');
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+  const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+  
+  const result = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  console.log('✅ parseISOToMySQL output:', result);
+  
+  return result;
+};
 
+/**
+ * MySQL'den gelen UTC tarihini ISO formatına çevir
+ * 
+ * Örnek:
+ * Input: "2025-12-19 16:00:00" (MySQL'de UTC)
+ * Output: "2025-12-19T16:00:00Z" (Frontend'e gönderilir)
+ * Frontend'de: new Date("2025-12-19T16:00:00Z") → Kullanıcı 19:00 görür (GMT+3)
+ */
 const formatDateToUTC = (mysqlDatetime) => {
   if (!mysqlDatetime) return null;
   
-  // 🔍 DEBUG: Ne geldiğini görelim
-  console.log('🔍 formatDateToUTC input:', {
-    value: mysqlDatetime,
-    type: typeof mysqlDatetime,
-    isDate: mysqlDatetime instanceof Date
-  });
-  
   // Eğer zaten Date object ise
   if (mysqlDatetime instanceof Date) {
-    console.log('📅 Date object detected, using UTC components');
-    const year = mysqlDatetime.getUTCFullYear();
-    const month = String(mysqlDatetime.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(mysqlDatetime.getUTCDate()).padStart(2, '0');
-    const hours = String(mysqlDatetime.getUTCHours()).padStart(2, '0');
-    const minutes = String(mysqlDatetime.getUTCMinutes()).padStart(2, '0');
-    const seconds = String(mysqlDatetime.getUTCSeconds()).padStart(2, '0');
-    
-    const result = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}Z`;
-    console.log('✅ Result:', result);
-    return result;
+    return mysqlDatetime.toISOString();
   }
   
-  // Eğer string ise
+  // Eğer string ise (MySQL'den gelen format: "2025-12-19 16:00:00")
   if (typeof mysqlDatetime === 'string') {
-    console.log('📝 String detected, adding Z suffix');
+    // MySQL'deki değer zaten UTC, sadece ISO formatına çevir
     const dateStr = mysqlDatetime.replace(' ', 'T') + 'Z';
-    console.log('✅ Result:', dateStr);
     return dateStr;
   }
   
   console.error('❌ Invalid date format:', mysqlDatetime);
   return null;
 };
-
 
 const formatReservationDates = (reservation) => {
   if (!reservation) return null;
@@ -49,27 +79,6 @@ const formatReservationDates = (reservation) => {
     approved_at: formatDateToUTC(reservation.approved_at),
     created_at: formatDateToUTC(reservation.created_at)
   };
-};
-
-/**
- * Frontend'den gelen ISO tarihini MySQL datetime formatına çevir
- * "2025-12-20T10:00:00" -> "2025-12-20 10:00:00"
- */
-const parseISOToMySQL = (isoString) => {
-  if (!isoString) return null;
-  
-  // ISO string'i Date objesine çevir
-  const date = new Date(isoString);
-  
-  // MySQL datetime formatına çevir (UTC olarak)
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  const hours = String(date.getUTCHours()).padStart(2, '0');
-  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-  const seconds = String(date.getUTCSeconds()).padStart(2, '0');
-  
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
 // Tüm rezervasyonları getir
@@ -237,7 +246,7 @@ const createReservation = async (req, res) => {
     }
     
     const now = new Date();
-    const startDateObj = new Date(start_date_time);
+    const startDateObj = new Date(start_date_time.includes('+') ? start_date_time : start_date_time + '+03:00');
     
     if (startDateObj < now) {
       return res.status(400).json({ message: 'Geçmiş tarihler için rezervasyon yapılamaz' });
@@ -280,12 +289,25 @@ const createReservation = async (req, res) => {
     
     const reservation = newReservations[0];
     
-    // SMS bildirimi
-    const startDateStr = new Date(start_date_time).toLocaleDateString('tr-TR');
-    const endDateStr = new Date(end_date_time).toLocaleDateString('tr-TR');
-    const dateRange = `${startDateStr} - ${endDateStr}`;
+    // SMS bildirimi - Türkiye saatinde göster
+    const startDateTR = new Date(startDate + 'Z').toLocaleString('tr-TR', { 
+      timeZone: 'Europe/Istanbul',
+      day: '2-digit',
+      month: '2-digit', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    const endDateTR = new Date(endDate + 'Z').toLocaleString('tr-TR', {
+      timeZone: 'Europe/Istanbul',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric', 
+      hour: '2-digit',
+      minute: '2-digit'
+    });
     const vehicleInfo = `${reservation.brand} ${reservation.model} (${reservation.license_plate})`;
-    const smsContent = `Araç Talebi Alındı: ${reservation.username} kişisinden ${dateRange} tarihleri için ${vehicleInfo} talebi oluşturuldu!`;
+    const smsContent = `Araç Talebi Alındı: ${reservation.username} kişisinden ${startDateTR} - ${endDateTR} tarihleri için ${vehicleInfo} talebi oluşturuldu!`;
     
     await sendSMS('05447350111', smsContent);
     
@@ -485,22 +507,33 @@ const updateReservationStatus = async (req, res) => {
     
     const updatedReservation = updatedReservations[0];
     
-    // SMS bildirimi
-    const startDateUTC = formatDateToUTC(updatedReservation.start_date_time);
-    const endDateUTC = formatDateToUTC(updatedReservation.end_date_time);
-    const startDateStr = new Date(startDateUTC).toLocaleDateString('tr-TR');
-    const endDateStr = new Date(endDateUTC).toLocaleDateString('tr-TR');
-    const dateRange = `${startDateStr} - ${endDateStr}`;
+    // SMS bildirimi - Türkiye saatinde göster
+    const startDateTR = new Date(updatedReservation.start_date_time + 'Z').toLocaleString('tr-TR', {
+      timeZone: 'Europe/Istanbul',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    const endDateTR = new Date(updatedReservation.end_date_time + 'Z').toLocaleString('tr-TR', {
+      timeZone: 'Europe/Istanbul',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
     const vehicleInfo = `${updatedReservation.brand} ${updatedReservation.model} (${updatedReservation.license_plate})`;
     
     let smsContent = '';
     
     if (status === 'approved') {
-      smsContent = `Sayın ${updatedReservation.username}, ${dateRange} tarihleri için ${vehicleInfo} araç talebiniz ONAYLANMIŞTIR.`;
+      smsContent = `Sayın ${updatedReservation.username}, ${startDateTR} - ${endDateTR} tarihleri için ${vehicleInfo} araç talebiniz ONAYLANMIŞTIR.`;
     } else if (status === 'rejected') {
-      smsContent = `Sayın ${updatedReservation.username}, ${dateRange} tarihleri için ${vehicleInfo} araç talebiniz REDDEDİLMİŞTİR.`;
+      smsContent = `Sayın ${updatedReservation.username}, ${startDateTR} - ${endDateTR} tarihleri için ${vehicleInfo} araç talebiniz REDDEDİLMİŞTİR.`;
     } else if (status === 'cancelled') {
-      smsContent = `Sayın ${updatedReservation.username}, ${dateRange} tarihleri için ${vehicleInfo} araç talebiniz İPTAL EDİLMİŞTİR.`;
+      smsContent = `Sayın ${updatedReservation.username}, ${startDateTR} - ${endDateTR} tarihleri için ${vehicleInfo} araç talebiniz İPTAL EDİLMİŞTİR.`;
     }
     
     if (smsContent && updatedReservation.phone) {
