@@ -3,15 +3,30 @@ const db = require('../../config/db');
 
 /**
  * MySQL'den gelen tarihleri UTC olarak formatla
- * MySQL datetime'ı string olarak gelir: "2025-12-20 10:00:00"
- * Bunu UTC timezone'da ISO string'e çevir
+ * MySQL'den Date object veya string gelebilir
  */
 const formatDateToUTC = (mysqlDatetime) => {
   if (!mysqlDatetime) return null;
   
-  // MySQL datetime string'ini parçala: "2025-12-20 10:00:00"
-  const dateStr = mysqlDatetime.replace(' ', 'T') + 'Z'; // UTC olarak işaretle
-  return dateStr; // "2025-12-20T10:00:00Z"
+  // Eğer zaten Date object ise
+  if (mysqlDatetime instanceof Date) {
+    return mysqlDatetime.toISOString();
+  }
+  
+  // Eğer string ise
+  if (typeof mysqlDatetime === 'string') {
+    // MySQL datetime string'ini parçala: "2025-12-20 10:00:00"
+    const dateStr = mysqlDatetime.replace(' ', 'T') + 'Z'; // UTC olarak işaretle
+    return dateStr; // "2025-12-20T10:00:00Z"
+  }
+  
+  // Diğer durumlar için Date'e çevirmeyi dene
+  try {
+    return new Date(mysqlDatetime).toISOString();
+  } catch (e) {
+    console.error('Invalid date:', mysqlDatetime);
+    return null;
+  }
 };
 
 /**
