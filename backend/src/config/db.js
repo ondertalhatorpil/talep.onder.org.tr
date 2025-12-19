@@ -11,16 +11,23 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME || 'arac_rezervasyonn',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  dateStrings: true,
+  timezone: '+00:00'
 });
 
 const testConnection = async () => {
   try {
     const connection = await pool.getConnection();
-    console.log('MySQL veritabanına bağlantı başarılı');
+    console.log('✅ MySQL veritabanına bağlantı başarılı');
+    
+    const [rows] = await connection.query('SELECT @@session.time_zone as tz, NOW() as `server_time`');
+    console.log('📅 MySQL Timezone:', rows[0].tz);
+    console.log('🕐 MySQL Server Time:', rows[0].server_time);
+    
     connection.release();
   } catch (error) {
-    console.error('MySQL bağlantı hatası:', error);
+    console.error('❌ MySQL bağlantı hatası:', error.message);
   }
 };
 
