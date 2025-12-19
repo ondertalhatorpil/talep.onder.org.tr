@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
+import { tr } from 'date-fns/locale';
 import { reservationService } from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import ReservationHeader from './ReservationHeader';
@@ -17,19 +19,6 @@ const Reservations = () => {
   const [rejectingReservationId, setRejectingReservationId] = useState(null);
 
   const isAdmin = user?.role === 'admin';
-
- useEffect(() => {
-  if (sortedReservations.length > 0) {
-    const first = sortedReservations[0];
-    console.log('🔍 DEBUG - Reservation Date Check:');
-    console.log('Raw API value:', first.start_date_time);
-    console.log('Type:', typeof first.start_date_time);
-    console.log('Parsed Date:', new Date(first.start_date_time));
-    console.log('ISO String:', new Date(first.start_date_time).toISOString());
-    console.log('Local String (TR):', new Date(first.start_date_time).toLocaleString('tr-TR'));
-    console.log('Format with date-fns:', format(new Date(first.start_date_time), 'PPP HH:mm', { locale: tr }));
-  }
-}, [sortedReservations]);
 
   useEffect(() => {
     const fetchReservations = async () => {
@@ -131,10 +120,30 @@ const Reservations = () => {
     return matchesStatus && matchesSearch;
   });
 
+  // ✅ sortedReservations burada tanımlanıyor
   const sortedReservations = [...filteredReservations].sort((a, b) => {
     const now = new Date();
     return Math.abs(new Date(a.start_date_time) - now) - Math.abs(new Date(b.start_date_time) - now);
   });
+
+  // ✅ Debug useEffect'i sortedReservations tanımlandıktan SONRA
+  useEffect(() => {
+    if (sortedReservations.length > 0) {
+      const first = sortedReservations[0];
+      console.log('🔍 DEBUG - Reservation Date Check:');
+      console.log('Raw API value:', first.start_date_time);
+      console.log('Type:', typeof first.start_date_time);
+      console.log('Parsed Date:', new Date(first.start_date_time));
+      console.log('ISO String:', new Date(first.start_date_time).toISOString());
+      console.log('Local String (TR):', new Date(first.start_date_time).toLocaleString('tr-TR'));
+      
+      try {
+        console.log('Format with date-fns:', format(new Date(first.start_date_time), 'PPP HH:mm', { locale: tr }));
+      } catch (e) {
+        console.log('date-fns format error:', e.message);
+      }
+    }
+  }, [sortedReservations]);
 
   if (loading) {
     return (
