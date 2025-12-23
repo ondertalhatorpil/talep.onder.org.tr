@@ -1,21 +1,11 @@
 const db = require('../../config/db');
 
-/**
- * Frontend'den gelen tarihi MySQL formatına çevir
- * Türkiye saati (GMT+3) olarak gelir, UTC'ye çevirir
- * 
- * Örnek:
- * Input: "2025-12-19T19:00" (Kullanıcı Türkiye'de 19:00 seçti)
- * Output: "2025-12-19 16:00:00" (MySQL'de UTC olarak saklanır)
- */
 const parseISOToMySQL = (isoString) => {
   if (!isoString) return null;
   
   console.log('🔍 parseISOToMySQL input:', isoString);
   
-  // ✅ SORUN BURADA ÇÖZÜLÜYOR!
-  // Eğer timezone bilgisi yoksa (sadece "2025-12-19T19:00" gibi), 
-  // bunu Türkiye saati (GMT+3) olarak kabul et
+
   let date;
   
   if (!isoString.includes('Z') && !isoString.includes('+') && !isoString.includes('-', 11)) {
@@ -42,14 +32,7 @@ const parseISOToMySQL = (isoString) => {
   return result;
 };
 
-/**
- * MySQL'den gelen UTC tarihini ISO formatına çevir
- * 
- * Örnek:
- * Input: "2025-12-19 16:00:00" (MySQL'de UTC)
- * Output: "2025-12-19T16:00:00Z" (Frontend'e gönderilir)
- * Frontend'de: new Date("2025-12-19T16:00:00Z") → Kullanıcı 19:00 görür (GMT+3)
- */
+
 const formatDateToUTC = (mysqlDatetime) => {
   if (!mysqlDatetime) return null;
   
@@ -175,15 +158,23 @@ const getReservationById = async (req, res) => {
 const sendSMS = async (phoneNumber, message) => {
   try {
     const username = 'ondermerkez';
-    const password = 'yO91GQKA39Rs';
+    const password = '8CJ4xbM81A3K'; // ✅ Güncel şifre
     const credentials = Buffer.from(`${username}:${password}`).toString('base64');
+
+    // Telefon numarasını formatla (905xx formatında olmalı)
+    let cleanPhone = phoneNumber.replace(/\s+/g, '');
+    if (cleanPhone.startsWith('0')) {
+      cleanPhone = '90' + cleanPhone.substring(1);
+    } else if (!cleanPhone.startsWith('90')) {
+      cleanPhone = '90' + cleanPhone;
+    }
 
     const smsData = {
       type: 1,
       sendingType: 0,
       title: "AracRezerve",
       content: message,
-      number: phoneNumber.replace(/\s+/g, ''),
+      number: cleanPhone,
       encoding: 1,
       sender: "ONDER iHD",
       validity: 60,
@@ -192,7 +183,12 @@ const sendSMS = async (phoneNumber, message) => {
       recipientType: 0
     };
     
-    const response = await fetch('https://panel4.ekomesaj.com:9588/sms/create', {
+    console.log('📱 SMS gönderiliyor:', {
+      number: cleanPhone,
+      messageLength: message.length
+    });
+    
+    const response = await fetch('http://panel4.ekomesaj.com:9587/sms/create', { // ✅ Doğru port
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -201,17 +197,31 @@ const sendSMS = async (phoneNumber, message) => {
       body: JSON.stringify(smsData)
     });
 
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ SMS API Hatası:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText
+      });
+      
+      return { 
+        success: false, 
+        error: `HTTP ${response.status}: ${errorText}` 
+      };
+    }
+
     const result = await response.json();
     
     if (result.data && result.data.pkgID) {
-      console.log(`SMS gönderildi. Paket ID: ${result.data.pkgID}`);
+      console.log(`✅ SMS başarıyla gönderildi. Paket ID: ${result.data.pkgID}`);
       return { success: true, packageId: result.data.pkgID };
     } else {
-      console.error('SMS gönderimi başarısız:', result.err);
-      return { success: false, error: result.err };
+      console.error('❌ SMS gönderimi başarısız:', result);
+      return { success: false, error: result.err || result.message || 'Bilinmeyen hata' };
     }
   } catch (error) {
-    console.error('SMS gönderim hatası:', error);
+    console.error('❌ SMS gönderim hatası:', error.message);
     return { success: false, error: error.message };
   }
 };
@@ -309,7 +319,7 @@ const createReservation = async (req, res) => {
     const vehicleInfo = `${reservation.brand} ${reservation.model} (${reservation.license_plate})`;
     const smsContent = `Araç Talebi Alındı: ${reservation.username} kişisinden ${startDateTR} - ${endDateTR} tarihleri için ${vehicleInfo} talebi oluşturuldu!`;
     
-    await sendSMS('05447350111', smsContent);
+    await sendSMS('05300409461', smsContent);
     
     const formattedReservation = formatReservationDates(reservation);
     
@@ -536,12 +546,37 @@ const updateReservationStatus = async (req, res) => {
       smsContent = `Sayın ${updatedReservation.username}, ${startDateTR} - ${endDateTR} tarihleri için ${vehicleInfo} araç talebiniz İPTAL EDİLMİŞTİR.`;
     }
     
+    // SMS gönderimi
     if (smsContent && updatedReservation.phone) {
-      try {
-        await sendSMS(updatedReservation.phone, smsContent);
-      } catch (smsError) {
-        console.error("SMS gönderiminde hata:", smsError);
+      console.log('📱 SMS gönderiliyor:', {
+        phone: updatedReservation.phone,
+        status: status,
+        user: updatedReservation.username
+      });
+      
+      const smsResult = await sendSMS(updatedReservation.phone, smsContent);
+      
+      if (smsResult.success) {
+        console.log('✅ SMS başarıyla gönderildi:', {
+          packageId: smsResult.packageId,
+          phone: updatedReservation.phone,
+          status: status
+        });
+      } else {
+        console.error('❌ SMS gönderilemedi:', {
+          phone: updatedReservation.phone,
+          error: smsResult.error,
+          status: status
+        });
+        // SMS gönderilemese bile işleme devam et
       }
+    } else {
+      console.warn('⚠️ SMS gönderilmedi:', {
+        hasContent: !!smsContent,
+        hasPhone: !!updatedReservation.phone,
+        phone: updatedReservation.phone,
+        status: status
+      });
     }
     
     const formattedReservation = formatReservationDates(updatedReservation);
